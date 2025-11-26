@@ -84,7 +84,7 @@ export default function LoginScreen() {
                             {/* Sign In Button */}
                             <TouchableOpacity
                                 className="bg-red-700 h-12 rounded-md items-center justify-center active:bg-red-800 shadow-md"
-                                onPress={() => signIn(username)}
+                                onPress={() => signIn(username, password)}
                             >
                                 <Text className="text-white font-bold text-lg uppercase tracking-wide">Sign In</Text>
                             </TouchableOpacity>

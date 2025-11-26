@@ -84,18 +84,3 @@ Start the App:
 npx expo start
 ```
 Scan the QR code with Expo Go.
-
-## 🔑 Default Credentials (from Seed)
-
-| Role | Username | Password |
-|------|----------|----------|
-| **Admin** | `admin` | `admin123` |
-| **CTC** | `ctc1` | `ctc123` |
-| **Worker** | `worker1` | `worker123` |
-
-## 📱 Usage
-
-1.  **Login**: Use one of the credentials above.
-2.  **Dashboard**: You will be redirected to the dashboard specific to your role.
-3.  **Admin Panel**: Admins can create new users and manage chiefdoms.
-4.  **Reporting**: CTC and Workers can report new faults.

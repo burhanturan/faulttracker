@@ -170,6 +170,8 @@ function AdminDashboard() {
 
   // Chiefdom Form State
   const [newChiefdom, setNewChiefdom] = useState('');
+  const [editingChiefdomId, setEditingChiefdomId] = useState<string | null>(null);
+  const [editChiefdomName, setEditChiefdomName] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -195,8 +197,8 @@ function AdminDashboard() {
   };
 
   const handleCreateUser = async () => {
-    if (!createUserForm.username || !createUserForm.fullName || !createUserForm.email || !createUserForm.phone) {
-      alert('Please fill all required fields');
+    if (!createUserForm.username || !createUserForm.fullName || !createUserForm.email || !createUserForm.phone || !createUserForm.password) {
+      alert('Please fill all required fields, including password');
       return;
     }
 
@@ -210,12 +212,9 @@ function AdminDashboard() {
       return;
     }
 
-    // Auto-generate password if empty
-    const password = createUserForm.password || Math.random().toString(36).slice(-8);
-
     try {
-      await api.post('/users', { ...createUserForm, password });
-      alert(`User created! Password sent to ${createUserForm.email}`);
+      await api.post('/users', { ...createUserForm });
+      alert('User created successfully!');
       setCreateUserForm({ username: '', password: '', fullName: '', role: 'worker', chiefdomId: '', email: '', phone: '+90' });
       fetchData();
     } catch (error) {
@@ -302,6 +301,18 @@ function AdminDashboard() {
     }
   };
 
+  const handleUpdateChiefdom = async () => {
+    if (!editChiefdomName) return;
+    try {
+      await api.put(`/chiefdoms/${editingChiefdomId}`, { name: editChiefdomName });
+      alert('Chiefdom updated');
+      setEditingChiefdomId(null);
+      fetchData();
+    } catch (error) {
+      alert('Failed to update chiefdom');
+    }
+  };
+
   // Filter roles based on current user's role
   const availableRoles = ['admin', 'engineer', 'ctc', 'ctc_watchman', 'worker'].filter(role => {
     if (user?.role !== 'admin' && role === 'admin') return false;
@@ -321,7 +332,7 @@ function AdminDashboard() {
           <TextInput placeholder="Full Name" value={createUserForm.fullName} onChangeText={t => setCreateUserForm({ ...createUserForm, fullName: t })} className="bg-gray-50 p-3 rounded border border-gray-200 mb-2" />
           <TextInput placeholder="Email" value={createUserForm.email} onChangeText={t => setCreateUserForm({ ...createUserForm, email: t })} keyboardType="email-address" autoCapitalize="none" className="bg-gray-50 p-3 rounded border border-gray-200 mb-2" />
           <TextInput placeholder="Phone (+90...)" value={createUserForm.phone} onChangeText={t => setCreateUserForm({ ...createUserForm, phone: t })} keyboardType="phone-pad" className="bg-gray-50 p-3 rounded border border-gray-200 mb-2" />
-          <TextInput placeholder="Password (leave empty to auto-generate)" value={createUserForm.password} onChangeText={t => setCreateUserForm({ ...createUserForm, password: t })} className="bg-gray-50 p-3 rounded border border-gray-200 mb-2" />
+          <TextInput placeholder="Password" value={createUserForm.password} onChangeText={t => setCreateUserForm({ ...createUserForm, password: t })} className="bg-gray-50 p-3 rounded border border-gray-200 mb-2" />
 
           <Text className="font-bold mt-2 mb-1">Role</Text>
           <View className="flex-row gap-2 flex-wrap mb-2">
@@ -422,8 +433,33 @@ function AdminDashboard() {
 
         {chiefdoms.map(c => (
           <View key={c.id} className="flex-row justify-between items-center bg-white p-4 rounded border border-gray-100">
-            <Text className="font-bold">{c.name}</Text>
-            <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} className="bg-red-100 px-3 py-1 rounded"><Text className="text-red-600">Delete</Text></TouchableOpacity>
+            {editingChiefdomId === c.id.toString() ? (
+              <View className="flex-1 flex-row gap-2">
+                <TextInput
+                  value={editChiefdomName}
+                  onChangeText={setEditChiefdomName}
+                  className="flex-1 bg-gray-50 p-2 rounded border border-gray-200"
+                />
+                <TouchableOpacity onPress={handleUpdateChiefdom} className="bg-green-600 px-3 py-2 rounded justify-center"><Text className="text-white font-bold">Save</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setEditingChiefdomId(null)} className="bg-gray-200 px-3 py-2 rounded justify-center"><Text className="text-gray-600 font-bold">Cancel</Text></TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <Text className="font-bold">{c.name}</Text>
+                <View className="flex-row gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingChiefdomId(c.id.toString());
+                      setEditChiefdomName(c.name);
+                    }}
+                    className="bg-blue-100 px-3 py-1 rounded"
+                  >
+                    <Text className="text-blue-600">Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} className="bg-red-100 px-3 py-1 rounded"><Text className="text-red-600">Delete</Text></TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         ))}
       </View>
@@ -471,8 +507,10 @@ function WorkerDashboard() {
 
 // --- Main Dashboard ---
 
+// --- Main Dashboard ---
+
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   const renderContent = () => {
     switch (user?.role) {
@@ -485,26 +523,11 @@ export default function Dashboard() {
     }
   };
 
+
+
   return (
     <ScrollView className="flex-1 bg-gray-50">
-      <View className="bg-white p-6 pt-12 shadow-sm mb-6">
-        <View className="flex-row justify-between items-center mb-4">
-          <View>
-            <Text className="text-gray-500 text-sm">Welcome,</Text>
-            <Text className="text-xl font-bold text-gray-800">{user?.fullName}</Text>
-          </View>
-          <TouchableOpacity onPress={signOut} className="bg-red-50 px-4 py-2 rounded-lg">
-            <Text className="text-red-600 font-medium">Logout</Text>
-          </TouchableOpacity>
-        </View>
-        <View className="flex-row items-center">
-          <View className="bg-blue-100 px-3 py-1 rounded-full">
-            <Text className="text-blue-800 font-medium capitalize">{user?.role?.replace('_', ' ')}</Text>
-          </View>
-        </View>
-      </View>
-
-      <View className="px-4 pb-8">
+      <View className="px-4 py-6">
         {renderContent()}
       </View>
     </ScrollView>

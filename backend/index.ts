@@ -127,12 +127,12 @@ app.post('/api/users', async (req, res) => {
             },
         });
 
-        // Mock Email Sending
-        console.log('--- MOCK EMAIL SENT ---');
-        console.log(`To: ${email}`);
-        console.log(`Subject: Welcome to FaultTracker`);
-        console.log(`Body: Hello ${fullName}, your account has been created. Username: ${username}, Password: ${password}`);
-        console.log('-----------------------');
+        // Mock Email Sending removed as per requirement
+        // console.log('--- MOCK EMAIL SENT ---');
+        // console.log(`To: ${email}`);
+        // console.log(`Subject: Welcome to FaultTracker`);
+        // console.log(`Body: Hello ${fullName}, your account has been created. Username: ${username}, Password: ${password}`);
+        // console.log('-----------------------');
 
         res.json(user);
     } catch (error) {

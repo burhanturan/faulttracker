@@ -5,6 +5,8 @@ export interface User {
     username: string;
     fullName: string;
     role: UserRole;
+    email?: string;
+    phone?: string;
 }
 
 export interface Fault {

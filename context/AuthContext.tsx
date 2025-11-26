@@ -5,7 +5,7 @@ import { User } from '../types';
 
 interface AuthContextType {
     user: User | null;
-    signIn: (username: string) => Promise<void>;
+    signIn: (username: string, password: string) => Promise<void>;
     signOut: () => void;
 }
 
@@ -14,10 +14,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
 
-    const signIn = async (username: string) => {
+    const signIn = async (username: string, password: string) => {
         try {
-            // For now, we use '123' as password for everyone as per seed
-            const user = await api.post('/auth/login', { username, password: '123' });
+            const user = await api.post('/auth/login', { username, password });
             setUser(user);
             router.replace('/(tabs)');
         } catch (error) {
