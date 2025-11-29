@@ -2,8 +2,8 @@ import { Platform } from 'react-native';
 
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 const API_URL = Platform.select({
-    android: 'http://10.0.2.2:3000/api',
-    ios: 'http://192.168.1.101:3000/api', // Your local IP
+    android: 'http://192.168.1.102:3000/api', // Use local IP for physical device & emulator
+    ios: 'http://192.168.1.102:3000/api', // Your local IP
     default: 'http://localhost:3000/api',
 });
 

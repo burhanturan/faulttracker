@@ -49,9 +49,11 @@ app.post('/api/auth/register', async (req, res) => {
 // Get all faults (can filter by role later)
 // Get all faults (can filter by role or reporter)
 app.get('/api/faults', async (req, res) => {
-    const { reportedById } = req.query;
+    const { reportedById, chiefdomId } = req.query;
     try {
-        const whereClause = reportedById ? { reportedById: parseInt(reportedById as string) } : {};
+        const whereClause: any = {};
+        if (reportedById) whereClause.reportedById = parseInt(reportedById as string);
+        if (chiefdomId) whereClause.chiefdomId = parseInt(chiefdomId as string);
         const faults = await prisma.fault.findMany({
             where: whereClause,
             include: {
@@ -109,6 +111,8 @@ app.post('/api/faults', async (req, res) => {
     }
 });
 
+
+
 // --- Admin Routes ---
 
 // Create User
@@ -160,6 +164,68 @@ app.put('/api/users/:id', async (req, res) => {
         res.json(user);
     } catch (error) {
         res.status(400).json({ error: 'Failed to update user.' });
+    }
+});
+
+// Update Fault (General update + Closure fields)
+app.put('/api/faults/:id', async (req, res) => {
+    const { id } = req.params;
+    const {
+        title, description, status, assignedToId, chiefdomId,
+        faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel
+    } = req.body;
+
+    try {
+        const fault = await prisma.fault.update({
+            where: { id: parseInt(id) },
+            data: {
+                title,
+                description,
+                status,
+                assignedToId: assignedToId ? parseInt(assignedToId) : undefined,
+                chiefdomId: chiefdomId ? parseInt(chiefdomId) : undefined,
+                // Closure Fields
+                faultDate,
+                faultTime,
+                reporterName,
+                lineInfo,
+                closureFaultInfo,
+                solution,
+                workingPersonnel,
+                tcddPersonnel
+            },
+        });
+        res.json(fault);
+    } catch (error) {
+        res.status(400).json({ error: 'Failed to update fault' });
+    }
+});
+
+// Close Fault
+app.put('/api/faults/:id/close', async (req, res) => {
+    const { id } = req.params;
+    const {
+        faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel
+    } = req.body;
+
+    try {
+        const fault = await prisma.fault.update({
+            where: { id: parseInt(id) },
+            data: {
+                status: 'closed',
+                faultDate,
+                faultTime,
+                reporterName,
+                lineInfo,
+                closureFaultInfo,
+                solution,
+                workingPersonnel,
+                tcddPersonnel
+            },
+        });
+        res.json(fault);
+    } catch (error) {
+        res.status(400).json({ error: 'Failed to close fault' });
     }
 });
 

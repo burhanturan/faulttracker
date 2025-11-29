@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
-import { useColorScheme } from '@/components/useColorScheme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -24,6 +23,7 @@ SplashScreen.preventAutoHideAsync();
 
 import { useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { ThemeProvider as CustomThemeProvider, useTheme } from '../context/ThemeContext';
 
 // ... existing imports ...
 
@@ -49,17 +49,19 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <CustomThemeProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </CustomThemeProvider>
   );
 }
 
 function RootLayoutNav() {
   const { user } = useAuth();
+  const { actualTheme } = useTheme();
   const segments = useSegments();
   const router = useRouter();
-  const colorScheme = useColorScheme();
 
   useEffect(() => {
     if (!user && segments[0] !== 'login') {
@@ -72,7 +74,7 @@ function RootLayoutNav() {
   }, [user, segments]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={actualTheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />

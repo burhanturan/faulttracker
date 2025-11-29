@@ -8,37 +8,46 @@ datasource db {
 }
 
 model Chiefdom {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  users User[]
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
   faults Fault[]
+  users  User[]
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  fullName  String
-  email     String?  @unique
-  phone     String?
-  role      String
-  chiefdom    Chiefdom? @relation(fields: [chiefdomId], references: [id])
-  chiefdomId  Int?
-  faultsReported Fault[] @relation("ReportedFaults")
-  faultsAssigned Fault[] @relation("AssignedFaults")
+  id             Int       @id @default(autoincrement())
+  username       String    @unique
+  password       String
+  fullName       String
+  role           String
+  chiefdomId     Int?
+  email          String?   @unique
+  phone          String?
+  faultsAssigned Fault[]   @relation("AssignedFaults")
+  faultsReported Fault[]   @relation("ReportedFaults")
+  chiefdom       Chiefdom? @relation(fields: [chiefdomId], references: [id])
 }
 
 model Fault {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  status      String   @default("open")
-  reportedBy  User     @relation("ReportedFaults", fields: [reportedById], references: [id])
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String
+  status       String    @default("open")
   reportedById Int
-  assignedTo  User?    @relation("AssignedFaults", fields: [assignedToId], references: [id])
   assignedToId Int?
-  chiefdom    Chiefdom? @relation(fields: [chiefdomId], references: [id])
-  chiefdomId  Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  chiefdomId   Int?
+  assignedTo   User?     @relation("AssignedFaults", fields: [assignedToId], references: [id])
+  chiefdom     Chiefdom? @relation(fields: [chiefdomId], references: [id])
+  reportedBy   User      @relation("ReportedFaults", fields: [reportedById], references: [id])
+  // Closure Details
+  faultDate       String?
+  faultTime       String?
+  reporterName    String?
+  lineInfo        String?
+  closureFaultInfo String?
+  solution        String?
+  workingPersonnel String?
+  tcddPersonnel   String?
 }
