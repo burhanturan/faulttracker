@@ -3,7 +3,6 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
@@ -32,19 +31,16 @@ function HeaderProfileButton() {
   };
 
   const handleLogout = () => {
-    console.log('Logout button clicked!');
     setShowLogoutConfirm(true);
   };
 
   const confirmLogout = () => {
-    console.log('Logout confirmed, calling signOut...');
     setShowMenu(false);
     setShowLogoutConfirm(false);
     signOut();
   };
 
   const cancelLogout = () => {
-    console.log('Logout cancelled');
     setShowLogoutConfirm(false);
   };
 
@@ -55,7 +51,7 @@ function HeaderProfileButton() {
   return (
     <View>
       <TouchableOpacity onPress={() => setShowMenu(true)} style={{ marginRight: 15 }}>
-        <FontAwesome name="user-circle" size={28} color={theme === 'dark' ? '#FFFFFF' : '#374151'} />
+        <FontAwesome name="user-circle" size={28} color={theme === 'dark' ? '#FFD700' : '#374151'} />
       </TouchableOpacity>
 
       <Modal
@@ -69,39 +65,39 @@ function HeaderProfileButton() {
           onPress={() => setShowMenu(false)}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <View style={styles.dropdownMenu}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151' }}>Menu</Text>
+            <View style={[styles.dropdownMenu, theme === 'dark' && { backgroundColor: '#1E1E1E' }]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: theme === 'dark' ? '#374151' : '#E5E7EB' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme === 'dark' ? '#FFFFFF' : '#374151' }}>Menü</Text>
                 <TouchableOpacity onPress={() => setShowMenu(false)}>
-                  <FontAwesome name="times" size={20} color="#6B7280" />
+                  <FontAwesome name="times" size={20} color={theme === 'dark' ? '#9CA3AF' : '#6B7280'} />
                 </TouchableOpacity>
               </View>
 
               <TouchableOpacity style={styles.menuItem} onPress={handleProfileSettings}>
-                <FontAwesome name="user" size={20} color="#374151" style={{ marginRight: 12 }} />
-                <Text style={styles.menuText}>Profile Settings</Text>
+                <FontAwesome name="user" size={20} color={theme === 'dark' ? '#FFFFFF' : '#374151'} style={{ marginRight: 12 }} />
+                <Text style={[styles.menuText, theme === 'dark' && { color: '#FFFFFF' }]}>Profil Ayarları</Text>
               </TouchableOpacity>
 
               <View style={styles.divider} />
 
               {/* Theme Selection */}
               <View style={styles.themeSection}>
-                <Text style={styles.sectionTitle}>Theme</Text>
+                <Text style={styles.sectionTitle}>Tema</Text>
                 <View style={styles.themeOptions}>
                   <TouchableOpacity
-                    style={[styles.themeButton, theme === 'light' && styles.themeButtonActive]}
+                    style={[styles.themeButton, theme === 'light' && { backgroundColor: '#FEF3C7', borderColor: '#EAB308' }]}
                     onPress={() => handleThemeChange('light')}
                   >
-                    <FontAwesome name="sun-o" size={18} color={theme === 'light' ? '#2563EB' : '#6B7280'} />
-                    <Text style={[styles.themeButtonText, theme === 'light' && styles.themeButtonTextActive]}>Light</Text>
+                    <FontAwesome name="sun-o" size={18} color={theme === 'light' ? '#B45309' : '#6B7280'} />
+                    <Text style={[styles.themeButtonText, theme === 'light' && { color: '#B45309', fontWeight: 'bold' }]}>Açık</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.themeButton, theme === 'dark' && styles.themeButtonActive]}
+                    style={[styles.themeButton, theme === 'dark' && { backgroundColor: '#FFD700', borderColor: '#FFD700' }]}
                     onPress={() => handleThemeChange('dark')}
                   >
-                    <FontAwesome name="moon-o" size={18} color={theme === 'dark' ? '#2563EB' : '#6B7280'} />
-                    <Text style={[styles.themeButtonText, theme === 'dark' && styles.themeButtonTextActive]}>Dark</Text>
+                    <FontAwesome name="moon-o" size={18} color={theme === 'dark' ? '#000000' : '#6B7280'} />
+                    <Text style={[styles.themeButtonText, theme === 'dark' && { color: '#000000', fontWeight: 'bold' }]}>Koyu</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -116,25 +112,25 @@ function HeaderProfileButton() {
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <FontAwesome name="sign-out" size={20} color="#DC2626" style={{ marginRight: 12 }} />
-                  <Text style={[styles.menuText, { color: '#DC2626' }]}>Logout</Text>
+                  <Text style={[styles.menuText, { color: '#DC2626' }]}>Çıkış Yap</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={{ padding: 16, backgroundColor: '#FEF2F2', borderRadius: 8, marginTop: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
-                    Are you sure you want to logout?
+                <View style={{ padding: 16, backgroundColor: theme === 'dark' ? '#374151' : '#FEF2F2', borderRadius: 8, marginTop: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: theme === 'dark' ? '#FFFFFF' : '#374151', marginBottom: 8 }}>
+                    Çıkış yapmak istediğinize emin misiniz?
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <TouchableOpacity
                       onPress={cancelLogout}
-                      style={{ flex: 1, backgroundColor: '#E5E7EB', paddingVertical: 10, borderRadius: 6, alignItems: 'center' }}
+                      style={{ flex: 1, backgroundColor: theme === 'dark' ? '#4B5563' : '#E5E7EB', paddingVertical: 10, borderRadius: 6, alignItems: 'center' }}
                     >
-                      <Text style={{ color: '#374151', fontWeight: '600' }}>Cancel</Text>
+                      <Text style={{ color: theme === 'dark' ? '#FFFFFF' : '#374151', fontWeight: '600' }}>İptal</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={confirmLogout}
                       style={{ flex: 1, backgroundColor: '#DC2626', paddingVertical: 10, borderRadius: 6, alignItems: 'center' }}
                     >
-                      <Text style={{ color: 'white', fontWeight: '600' }}>Logout</Text>
+                      <Text style={{ color: 'white', fontWeight: '600' }}>Çıkış</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -214,7 +210,7 @@ const styles = StyleSheet.create({
   },
   themeButtonActive: {
     backgroundColor: '#EFF6FF',
-    borderColor: '#2563EB',
+    borderColor: '#1B3A6B',
   },
   themeButtonText: {
     fontSize: 14,
@@ -222,18 +218,28 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   themeButtonTextActive: {
-    color: '#2563EB',
+    color: '#1B3A6B',
     fontWeight: '600',
   },
 });
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { actualTheme } = useTheme();
+  const colorScheme = actualTheme;
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarStyle: {
+          backgroundColor: Colors[colorScheme ?? 'light'].tabBarBackground,
+          borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+        },
+        headerStyle: {
+          backgroundColor: Colors[colorScheme ?? 'light'].headerBackground,
+        },
+        headerTintColor: Colors[colorScheme ?? 'light'].headerText,
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
@@ -241,7 +247,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Ana Sayfa',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
           headerShown: true,
           headerRight: () => <HeaderProfileButton />,
@@ -251,7 +257,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: 'Geçmiş',
           tabBarIcon: ({ color }) => <TabBarIcon name="history" color={color} />,
           headerShown: true,
           headerRight: () => <HeaderProfileButton />,
@@ -261,9 +267,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Profil',
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-          headerShown: false,
+          headerShown: true,
+          headerTitleAlign: 'center',
         }}
       />
     </Tabs>

@@ -94,7 +94,10 @@ app.get('/api/users', async (req, res) => {
 
 // Create a fault
 app.post('/api/faults', async (req, res) => {
-    const { title, description, reportedById, chiefdomId } = req.body;
+    const {
+        title, description, reportedById, chiefdomId, status,
+        faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel
+    } = req.body;
     try {
         const fault = await prisma.fault.create({
             data: {
@@ -102,7 +105,16 @@ app.post('/api/faults', async (req, res) => {
                 description,
                 reportedById,
                 chiefdomId: chiefdomId ? parseInt(chiefdomId) : undefined,
-                status: 'open',
+                status: status || 'open',
+                // Closure Fields
+                faultDate,
+                faultTime,
+                reporterName,
+                lineInfo,
+                closureFaultInfo,
+                solution,
+                workingPersonnel,
+                tcddPersonnel
             },
         });
         res.json(fault);

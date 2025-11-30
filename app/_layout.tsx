@@ -21,7 +21,7 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-import { useRouter, useSegments } from 'expo-router';
+import { useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { ThemeProvider as CustomThemeProvider, useTheme } from '../context/ThemeContext';
 
@@ -63,7 +63,11 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
+  const rootNavigationState = useRootNavigationState();
+
   useEffect(() => {
+    if (!rootNavigationState?.key) return;
+
     if (!user && segments[0] !== 'login') {
       // Redirect to the login page if not signed in
       router.replace('/login');
@@ -71,7 +75,7 @@ function RootLayoutNav() {
       // Redirect to the tabs page if signed in
       router.replace('/(tabs)');
     }
-  }, [user, segments]);
+  }, [user, segments, rootNavigationState?.key]);
 
   return (
     <ThemeProvider value={actualTheme === 'dark' ? DarkTheme : DefaultTheme}>

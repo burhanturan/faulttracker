@@ -18,7 +18,7 @@ export default function LoginScreen() {
     return (
         <View className="flex-1">
             <LinearGradient
-                colors={isDark ? ['#1F2937', '#111827'] : ['#8B0000', '#2F2F2F']}
+                colors={isDark ? ['#1E1E1E', '#121212'] : ['#F3F4F6', '#E5E7EB']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="flex-1 justify-center items-center"
@@ -36,24 +36,24 @@ export default function LoginScreen() {
                             {/* Logo Section */}
                             <View className="items-center mb-8">
                                 <View className="flex-row items-center mb-2">
-                                    <FontAwesome name="train" size={40} color="white" style={{ marginRight: 10 }} />
-                                    <Text className="text-4xl font-bold text-white tracking-wider">FAULT<Text className="text-red-500">TRACKER</Text></Text>
+                                    <FontAwesome name="train" size={40} color={isDark ? "white" : "#EAB308"} style={{ marginRight: 10 }} />
+                                    <Text className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} tracking-wider`}>FAULT<Text className={isDark ? "text-red-500" : "text-yellow-500"}>TRACKER</Text></Text>
                                 </View>
-                                <Text className="text-gray-300 text-sm tracking-widest uppercase">Railway Maintenance System</Text>
+                                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-500'} text-sm tracking-widest uppercase`}>Demiryolu Bakım Sistemi</Text>
                             </View>
 
                             {/* Login Card */}
-                            <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} w-full rounded-lg p-8 shadow-2xl`}>
-                                <Text className={`text-2xl font-bold text-center mb-8 ${isDark ? 'text-white' : 'text-gray-800'}`}>Log in</Text>
+                            <View className={`${isDark ? 'bg-dark-card' : 'bg-white'} w-full rounded-lg p-8 shadow-2xl`}>
+                                <Text className={`text-2xl font-bold text-center mb-8 ${isDark ? 'text-white' : 'text-gray-800'}`}>Giriş Yap</Text>
 
                                 {/* Username Input */}
                                 <View className="mb-4">
-                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Username:</Text>
-                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Kullanıcı Adı:</Text>
+                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-dark-bg' : 'bg-gray-100'}`}>
                                         <FontAwesome name="user" size={18} color={isDark ? '#9CA3AF' : '#666'} />
                                         <TextInput
                                             className={`flex-1 ml-3 ${isDark ? 'text-white' : 'text-gray-800'}`}
-                                            placeholder="Username"
+                                            placeholder="Kullanıcı Adı"
                                             placeholderTextColor={isDark ? '#6B7280' : '#999'}
                                             value={username}
                                             onChangeText={setUsername}
@@ -64,12 +64,12 @@ export default function LoginScreen() {
 
                                 {/* Password Input */}
                                 <View className="mb-4">
-                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Password:</Text>
-                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Şifre:</Text>
+                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-dark-bg' : 'bg-gray-100'}`}>
                                         <FontAwesome name="lock" size={18} color={isDark ? '#9CA3AF' : '#666'} />
                                         <TextInput
                                             className={`flex-1 ml-3 ${isDark ? 'text-white' : 'text-gray-800'}`}
-                                            placeholder="Password"
+                                            placeholder="Şifre"
                                             placeholderTextColor={isDark ? '#6B7280' : '#999'}
                                             value={password}
                                             onChangeText={setPassword}
@@ -83,18 +83,18 @@ export default function LoginScreen() {
                                     <Checkbox
                                         value={isChecked}
                                         onValueChange={setChecked}
-                                        color={isChecked ? '#B91C1C' : undefined}
+                                        color={isChecked ? (isDark ? '#B91C1C' : '#EAB308') : undefined}
                                         style={{ borderRadius: 4 }}
                                     />
-                                    <Text className={`ml-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Remember me</Text>
+                                    <Text className={`ml-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Beni Hatırla</Text>
                                 </View>
 
                                 {/* Sign In Button */}
                                 <TouchableOpacity
-                                    className="bg-red-700 h-12 rounded-md items-center justify-center active:bg-red-800 shadow-md"
+                                    className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} h-12 rounded-md items-center justify-center active:opacity-90 shadow-md`}
                                     onPress={() => signIn(username, password)}
                                 >
-                                    <Text className="text-white font-bold text-lg uppercase tracking-wide">Sign In</Text>
+                                    <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg uppercase tracking-wide`}>Giriş Yap</Text>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>
