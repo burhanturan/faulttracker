@@ -50,4 +50,13 @@ model Fault {
   solution        String?
   workingPersonnel String?
   tcddPersonnel   String?
+  images          FaultImage[]
+}
+
+model FaultImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  faultId   Int
+  fault     Fault    @relation(fields: [faultId], references: [id])
+  createdAt DateTime @default(now())
 }

@@ -1,6 +1,7 @@
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../lib/api';
@@ -51,6 +52,24 @@ function CTCDashboard() {
   // Unified View State
   const [view, setView] = useState<'overview' | 'history' | 'all_faults' | 'report_fault'>('overview');
   const [allFaults, setAllFaults] = useState<any[]>([]);
+  const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const pickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImages(prev => [...prev, ...result.assets].slice(0, 5));
+    }
+  };
 
   // Closure Form State
   const [closingFaultId, setClosingFaultId] = useState<string | null>(null);
@@ -105,12 +124,29 @@ function CTCDashboard() {
     }
 
     try {
-      await api.put(`/faults/${closingFaultId}`, {
-        ...closureForm,
-        status: 'closed'
+      const formData = new FormData();
+      formData.append('status', 'closed');
+      formData.append('faultDate', closureForm.faultDate);
+      formData.append('faultTime', closureForm.faultTime);
+      formData.append('reporterName', closureForm.reporterName);
+      formData.append('lineInfo', closureForm.lineInfo);
+      formData.append('closureFaultInfo', closureForm.faultInfo);
+      formData.append('solution', closureForm.solution);
+      formData.append('workingPersonnel', closureForm.personnel);
+      formData.append('tcddPersonnel', closureForm.tcddPersonnel);
+
+      selectedImages.forEach((image, index) => {
+        formData.append('images', {
+          uri: image.uri,
+          type: 'image/jpeg', // Adjust based on actual type if needed
+          name: `image_${index}.jpg`
+        } as any);
       });
+
+      await api.put(`/faults/${closingFaultId}`, formData, true); // true for multipart
       alert('Arıza başarıyla kapatıldı!');
       setClosingFaultId(null);
+      setSelectedImages([]);
       setClosureForm({
         faultDate: '',
         faultTime: '',
@@ -126,6 +162,7 @@ function CTCDashboard() {
       alert('Arıza kapatılamadı');
     }
   };
+
 
   const openClosureForm = (fault: any) => {
     setClosingFaultId(fault.id.toString());
@@ -245,6 +282,24 @@ function CTCDashboard() {
                 <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
               </View>
 
+              <View>
+                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                  {selectedImages.map((img, index) => (
+                    <View key={index} className="relative">
+                      <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
+                      <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
+                        <Text className="text-white font-bold text-xs">X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
+                    <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+                <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
+              </View>
+
               <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
                 <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
               </TouchableOpacity>
@@ -362,7 +417,26 @@ function AdminDashboard() {
   const [faults, setFaults] = useState<any[]>([]);
   const [chiefdoms, setChiefdoms] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults'>('overview');
+  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user'>('overview');
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const pickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImages(prev => [...prev, ...result.assets].slice(0, 5));
+    }
+  };
 
   // Create User Form State
   const [createUserForm, setCreateUserForm] = useState({ username: '', password: '', fullName: '', role: 'worker', chiefdomId: '', email: '', phone: '+90' });
@@ -429,8 +503,10 @@ function AdminDashboard() {
       setFaults(faultsData.filter((f: any) => f.status === 'open'));
       setChiefdoms(chiefdomsData);
       setUsers(usersData);
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error(error);
+      setError(error.message || 'Veri yüklenirken bir hata oluştu');
     }
   };
 
@@ -444,12 +520,29 @@ function AdminDashboard() {
     }
 
     try {
-      await api.put(`/faults/${closingFaultId}`, {
-        ...closureForm,
-        status: 'closed'
+      const formData = new FormData();
+      formData.append('status', 'closed');
+      formData.append('faultDate', closureForm.faultDate);
+      formData.append('faultTime', closureForm.faultTime);
+      formData.append('reporterName', closureForm.reporterName);
+      formData.append('lineInfo', closureForm.lineInfo);
+      formData.append('closureFaultInfo', closureForm.faultInfo);
+      formData.append('solution', closureForm.solution);
+      formData.append('workingPersonnel', closureForm.personnel);
+      formData.append('tcddPersonnel', closureForm.tcddPersonnel);
+
+      selectedImages.forEach((image, index) => {
+        formData.append('images', {
+          uri: image.uri,
+          type: 'image/jpeg', // Adjust based on actual type if needed
+          name: `image_${index}.jpg`
+        } as any);
       });
+
+      await api.put(`/faults/${closingFaultId}`, formData, true); // true for multipart
       alert('Arıza başarıyla kapatıldı!');
       setClosingFaultId(null);
+      setSelectedImages([]);
       setClosureForm({
         faultDate: '',
         faultTime: '',
@@ -615,40 +708,9 @@ function AdminDashboard() {
           <Text className="text-black font-bold">← Geri</Text>
         </TouchableOpacity>
 
-        {/* Create User Form */}
-        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-xl shadow-sm border`}>
-          <Text className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Kullanıcı Oluştur</Text>
-
-          <TextInput placeholder="Kullanıcı Adı" value={createUserForm.username} onChangeText={t => setCreateUserForm({ ...createUserForm, username: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-          <TextInput placeholder="Ad Soyad" value={createUserForm.fullName} onChangeText={t => setCreateUserForm({ ...createUserForm, fullName: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-          <TextInput placeholder="E-posta" value={createUserForm.email} onChangeText={t => setCreateUserForm({ ...createUserForm, email: t })} keyboardType="email-address" autoCapitalize="none" className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-          <TextInput placeholder="Telefon (+90...)" value={createUserForm.phone} onChangeText={t => setCreateUserForm({ ...createUserForm, phone: t })} keyboardType="phone-pad" className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-          <TextInput placeholder="Şifre" value={createUserForm.password} onChangeText={t => setCreateUserForm({ ...createUserForm, password: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-
-          <Text className={`font-bold mt-2 mb-1 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Rol</Text>
-          <View className="flex-row gap-2 flex-wrap mb-2">
-            {availableRoles.map(r => (
-              <TouchableOpacity key={r} onPress={() => setCreateUserForm({ ...createUserForm, role: r, chiefdomId: '' })} className={`px-3 py-1 rounded-full border ${createUserForm.role === r ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
-                <Text className={createUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{r}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {createUserForm.role === 'worker' && (
-            <>
-              <Text className={`font-bold mt-2 mb-1 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Şeflik Ata</Text>
-              <View className="flex-row gap-2 flex-wrap mb-2">
-                {chiefdoms.map(c => (
-                  <TouchableOpacity key={c.id} onPress={() => setCreateUserForm({ ...createUserForm, chiefdomId: c.id.toString() })} className={`px-3 py-1 rounded-full border ${createUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
-                    <Text className={createUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{c.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
-          <TouchableOpacity onPress={handleCreateUser} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded items-center mt-4`}><Text className={`${isDark ? 'text-black' : 'text-white'} font-bold`}>Kullanıcı Oluştur</Text></TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => setView('create_user')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mb-4 shadow-sm`}>
+          <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>+ Yeni Kullanıcı Oluştur</Text>
+        </TouchableOpacity>
 
         <Text className={`text-xl font-bold mt-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Mevcut Kullanıcılar</Text>
         {users.map(u => (
@@ -711,6 +773,50 @@ function AdminDashboard() {
           </View>
         ))}
         {users.length === 0 && <Text className="text-gray-500 text-center mt-4">Kullanıcı bulunamadı.</Text>}
+      </View>
+    );
+  }
+
+  if (view === 'create_user') {
+    return (
+      <View className="gap-4">
+        <TouchableOpacity onPress={() => setView('users')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
+          <Text className="text-black font-bold">← Geri</Text>
+        </TouchableOpacity>
+
+        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-xl shadow-sm border`}>
+          <Text className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Kullanıcı Oluştur</Text>
+
+          <TextInput placeholder="Kullanıcı Adı" value={createUserForm.username} onChangeText={t => setCreateUserForm({ ...createUserForm, username: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+          <TextInput placeholder="Ad Soyad" value={createUserForm.fullName} onChangeText={t => setCreateUserForm({ ...createUserForm, fullName: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+          <TextInput placeholder="E-posta" value={createUserForm.email} onChangeText={t => setCreateUserForm({ ...createUserForm, email: t })} keyboardType="email-address" autoCapitalize="none" className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+          <TextInput placeholder="Telefon (+90...)" value={createUserForm.phone} onChangeText={t => setCreateUserForm({ ...createUserForm, phone: t })} keyboardType="phone-pad" className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+          <TextInput placeholder="Şifre" value={createUserForm.password} onChangeText={t => setCreateUserForm({ ...createUserForm, password: t })} className={`p-3 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+
+          <Text className={`font-bold mt-2 mb-1 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Rol</Text>
+          <View className="flex-row gap-2 flex-wrap mb-2">
+            {availableRoles.map(r => (
+              <TouchableOpacity key={r} onPress={() => setCreateUserForm({ ...createUserForm, role: r, chiefdomId: '' })} className={`px-3 py-1 rounded-full border ${createUserForm.role === r ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
+                <Text className={createUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{r}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {createUserForm.role === 'worker' && (
+            <>
+              <Text className={`font-bold mt-2 mb-1 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Şeflik Ata</Text>
+              <View className="flex-row gap-2 flex-wrap mb-2">
+                {chiefdoms.map(c => (
+                  <TouchableOpacity key={c.id} onPress={() => setCreateUserForm({ ...createUserForm, chiefdomId: c.id.toString() })} className={`px-3 py-1 rounded-full border ${createUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
+                    <Text className={createUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          <TouchableOpacity onPress={handleCreateUser} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded items-center mt-4`}><Text className={`${isDark ? 'text-black' : 'text-white'} font-bold`}>Kullanıcı Oluştur</Text></TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -830,12 +936,30 @@ function AdminDashboard() {
                 <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
               </View>
 
+              <View>
+                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                  {selectedImages.map((img, index) => (
+                    <View key={index} className="relative">
+                      <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
+                      <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
+                        <Text className="text-white font-bold text-xs">X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
+                    <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+                <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
+              </View>
+
               <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
                 <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </View >
       );
     }
 
@@ -870,6 +994,12 @@ function AdminDashboard() {
 
   return (
     <View className="gap-4">
+      {error && (
+        <View className="bg-red-100 p-4 rounded-lg mb-4">
+          <Text className="text-red-800 font-bold">Hata: {error}</Text>
+          <Text className="text-red-600 text-xs mt-1">Lütfen internet bağlantınızı ve sunucunun çalıştığını kontrol edin.</Text>
+        </View>
+      )}
       <DashboardCard title="Sistem Genel Bakış" value="Tüm Sistemler Normal" color="bg-green-100 text-green-800" />
 
       <TouchableOpacity onPress={() => setView('faults')}>
@@ -902,6 +1032,25 @@ function WorkerDashboard() {
   const isDark = actualTheme === 'dark';
   const [faults, setFaults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const pickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImages(prev => [...prev, ...result.assets].slice(0, 5));
+    }
+  };
 
   // Closure Form State
   const [closingFaultId, setClosingFaultId] = useState<string | null>(null);
@@ -943,9 +1092,11 @@ function WorkerDashboard() {
           // Filter for active faults only
           setFaults(data.filter((f: any) => f.status === 'open'));
           setLoading(false);
+          setError(null);
         })
         .catch(err => {
           console.error(err);
+          setError('Arızalar yüklenemedi');
           setLoading(false);
         });
     } else {
@@ -963,12 +1114,29 @@ function WorkerDashboard() {
     }
 
     try {
-      await api.put(`/faults/${closingFaultId}`, {
-        ...closureForm,
-        status: 'closed'
+      const formData = new FormData();
+      formData.append('status', 'closed');
+      formData.append('faultDate', closureForm.faultDate);
+      formData.append('faultTime', closureForm.faultTime);
+      formData.append('reporterName', closureForm.reporterName);
+      formData.append('lineInfo', closureForm.lineInfo);
+      formData.append('closureFaultInfo', closureForm.faultInfo);
+      formData.append('solution', closureForm.solution);
+      formData.append('workingPersonnel', closureForm.personnel);
+      formData.append('tcddPersonnel', closureForm.tcddPersonnel);
+
+      selectedImages.forEach((image, index) => {
+        formData.append('images', {
+          uri: image.uri,
+          type: 'image/jpeg', // Adjust based on actual type if needed
+          name: `image_${index}.jpg`
+        } as any);
       });
+
+      await api.put(`/faults/${closingFaultId}`, formData, true); // true for multipart
       alert('Arıza başarıyla kapatıldı!');
       setClosingFaultId(null);
+      setSelectedImages([]);
       setClosureForm({
         faultDate: '',
         faultTime: '',
@@ -1044,6 +1212,24 @@ function WorkerDashboard() {
               <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
             </View>
 
+            <View>
+              <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                {selectedImages.map((img, index) => (
+                  <View key={index} className="relative">
+                    <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
+                    <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
+                      <Text className="text-white font-bold text-xs">X</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
+                  <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
+                </TouchableOpacity>
+              </ScrollView>
+              <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
+            </View>
+
             <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
               <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
             </TouchableOpacity>
@@ -1055,6 +1241,12 @@ function WorkerDashboard() {
 
   return (
     <View className="gap-4">
+      {error && (
+        <View className="bg-red-100 p-4 rounded-lg mb-4">
+          <Text className="text-red-800 font-bold">Hata: {error}</Text>
+          <Text className="text-red-600 text-xs mt-1">Lütfen internet bağlantınızı ve sunucunun çalıştığını kontrol edin.</Text>
+        </View>
+      )}
       <DashboardCard title="Şeflik Arızaları" value={faults.length.toString()} color={`${isDark ? 'bg-dark-card text-dark-primary' : 'bg-light-card text-light-primary'}`} />
 
       <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Şefliğimdeki Arızalar</Text>

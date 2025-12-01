@@ -68,12 +68,14 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!rootNavigationState?.key) return;
 
-    if (!user && segments[0] !== 'login') {
+    const inAuthGroup = segments[0] === '(tabs)';
+
+    if (!user && inAuthGroup) {
       // Redirect to the login page if not signed in
-      router.replace('/login');
+      setTimeout(() => router.replace('/login'), 0);
     } else if (user && segments[0] === 'login') {
       // Redirect to the tabs page if signed in
-      router.replace('/(tabs)');
+      setTimeout(() => router.replace('/(tabs)'), 0);
     }
   }, [user, segments, rootNavigationState?.key]);
 

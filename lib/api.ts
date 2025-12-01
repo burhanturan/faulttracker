@@ -1,11 +1,14 @@
 import { Platform } from 'react-native';
 
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
-const API_URL = Platform.select({
-    android: 'http://192.168.1.102:3000/api', // Use local IP for physical device & emulator
-    ios: 'http://192.168.1.102:3000/api', // Your local IP
-    default: 'http://localhost:3000/api',
+// Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
+export const BASE_URL = Platform.select({
+    android: 'http://192.168.1.102:3000', // Use local IP for physical device & emulator
+    ios: 'http://192.168.1.102:3000', // Your local IP
+    default: 'http://localhost:3000',
 });
+
+const API_URL = `${BASE_URL}/api`;
 
 export const api = {
     get: async (endpoint: string) => {
@@ -25,11 +28,12 @@ export const api = {
         }
         return res.json();
     },
-    put: async (endpoint: string, body: any) => {
+    put: async (endpoint: string, body: any, isMultipart = false) => {
+        const headers: any = isMultipart ? {} : { 'Content-Type': 'application/json' };
         const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            headers,
+            body: isMultipart ? body : JSON.stringify(body),
         });
         if (!res.ok) {
             const error = await res.json();

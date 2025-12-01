@@ -1,9 +1,9 @@
 import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { api } from '../../lib/api';
+import { api, BASE_URL } from '../../lib/api';
 
 export default function HistoryScreen() {
     const { user } = useAuth();
@@ -18,6 +18,7 @@ export default function HistoryScreen() {
             setShowCreateModal(false);
             setSelectedFault(null);
             setIsEditing(false);
+            fetchHistory(); // Refresh data on focus
         }, [])
     );
 
@@ -72,6 +73,21 @@ export default function HistoryScreen() {
 
             const data = await api.get(endpoint);
             const closedFaults = data.filter((f: any) => f.status === 'closed');
+
+            // Sort by faultDate and faultTime (Descending - Newest First)
+            closedFaults.sort((a: any, b: any) => {
+                const parseDate = (dateStr: string, timeStr: string) => {
+                    if (!dateStr) return new Date(0);
+                    const [day, month, year] = dateStr.split('.');
+                    return new Date(`${year}-${month}-${day}T${timeStr || '00:00'}`);
+                };
+
+                const dateA = parseDate(a.faultDate, a.faultTime);
+                const dateB = parseDate(b.faultDate, b.faultTime);
+
+                return dateB.getTime() - dateA.getTime();
+            });
+
             setHistory(closedFaults);
         } catch (error) {
             console.error(error);
@@ -251,6 +267,21 @@ export default function HistoryScreen() {
                                     <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.tcddPersonnel || '-'}</Text>
                                 )}
                             </View>
+                            {selectedFault.images && selectedFault.images.length > 0 && (
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs mb-2">Fotoğraflar</Text>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                                        {selectedFault.images.map((img: any, index: number) => (
+                                            <Image
+                                                key={index}
+                                                source={{ uri: `${BASE_URL}${img.url}` }}
+                                                className="w-40 h-40 rounded-lg bg-gray-200"
+                                                resizeMode="cover"
+                                            />
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            )}
                         </View>
                     </View>
 
