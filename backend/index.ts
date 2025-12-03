@@ -288,10 +288,13 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
     const { username, password, fullName, role, chiefdomId, email, phone } = req.body;
     try {
+        // Hash password before storing
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await prisma.user.create({
             data: {
                 username,
-                password,
+                password: hashedPassword,
                 fullName,
                 role,
                 chiefdomId: chiefdomId ? parseInt(chiefdomId) : null,
@@ -312,7 +315,12 @@ app.put('/api/users/:id', async (req, res) => {
     const { username, password, fullName, role, chiefdomId, email, phone } = req.body;
     try {
         const updateData: any = { username, fullName, role, email, phone };
-        if (password) updateData.password = password;
+
+        // Hash password if it's being updated
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
         if (chiefdomId) updateData.chiefdomId = parseInt(chiefdomId);
         else if (chiefdomId === '') updateData.chiefdomId = null;
 

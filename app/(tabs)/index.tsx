@@ -598,6 +598,12 @@ function AdminDashboard() {
       return;
     }
 
+    // Password validation
+    if (createUserForm.password.length < 3) {
+      showAlert('Geçersiz Şifre', 'Şifre en az 3 karakter olmalıdır', 'error');
+      return;
+    }
+
     if (!validateEmail(createUserForm.email)) {
       showAlert('Geçersiz E-posta', 'Lütfen geçerli bir e-posta adresi giriniz', 'error');
       return;
@@ -618,6 +624,7 @@ function AdminDashboard() {
     }
   };
 
+
   const handleUpdateUser = async () => {
     if (!editUserForm.username || !editUserForm.fullName || !editUserForm.email || !editUserForm.phone) {
       showAlert('Eksik Bilgi', 'Lütfen tüm zorunlu alanları doldurunuz', 'error');
@@ -631,6 +638,12 @@ function AdminDashboard() {
 
     if (!editUserForm.phone.startsWith('+90') || editUserForm.phone.length < 13) {
       showAlert('Geçersiz Telefon', 'Telefon numarası +90 ile başlamalıdır', 'error');
+      return;
+    }
+
+    // Validate password if user is changing it
+    if (editUserForm.password && editUserForm.password.length < 3) {
+      showAlert('Geçersiz Şifre', 'Şifre en az 3 karakter olmalıdır', 'error');
       return;
     }
 
