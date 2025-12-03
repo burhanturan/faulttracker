@@ -1,30 +1,28 @@
 import { PrismaClient } from '@prisma/client';
+import { v2 as cloudinary } from 'cloudinary';
 import cors from 'cors';
+import 'dotenv/config';
 import express from 'express';
-import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
-import sharp from 'sharp';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-}
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Configure Multer Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'fault-tracker',
+        allowed_formats: ['jpg', 'png', 'jpeg'],
+    } as any
 });
 
 const upload = multer({ storage: storage });
@@ -32,7 +30,11 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(express.json());
 // Serve uploaded files statically
-app.use('/uploads', express.static(uploadDir));
+// Serve uploaded files statically - REMOVED for Cloudinary
+// app.use('/uploads', express.static(uploadDir));
+
+// Serve uploaded files statically - REMOVED for Cloudinary
+// app.use('/uploads', express.static(uploadDir));
 
 // --- Auth Routes ---
 
@@ -134,21 +136,8 @@ app.put('/api/faults/:id', upload.any(), async (req, res) => {
     const { status, assignedToId, faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel } = req.body;
 
     try {
-        // Compress Images
-        if (req.files && Array.isArray(req.files)) {
-            await Promise.all(req.files.map(async (file) => {
-                const filePath = file.path;
-                const tempPath = filePath + '.tmp';
-
-                await sharp(filePath)
-                    .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }) // Max 1024x1024
-                    .jpeg({ quality: 80 }) // Compress to 80% quality
-                    .toFile(tempPath);
-
-                fs.unlinkSync(filePath); // Delete original
-                fs.renameSync(tempPath, filePath); // Rename compressed to original
-            }));
-        }
+        // Images are already uploaded to Cloudinary by multer-storage-cloudinary
+        // No need for manual compression with sharp
 
         const updateData: any = {};
         if (status) updateData.status = status;
@@ -174,7 +163,7 @@ app.put('/api/faults/:id', upload.any(), async (req, res) => {
             const imagePromises = (req.files as Express.Multer.File[]).map(file => {
                 return prisma.faultImage.create({
                     data: {
-                        url: `/uploads/${file.filename}`,
+                        url: file.path, // Cloudinary URL
                         faultId: fault.id
                     }
                 });
@@ -404,5 +393,11 @@ const startServer = async () => {
         process.exit(1);
     }
 };
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Global Error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
 
 startServer();
