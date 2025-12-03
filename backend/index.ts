@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import { v2 as cloudinary } from 'cloudinary';
 import cors from 'cors';
 import 'dotenv/config';
@@ -29,12 +30,6 @@ const upload = multer({ storage: storage });
 
 app.use(cors());
 app.use(express.json());
-// Serve uploaded files statically
-// Serve uploaded files statically - REMOVED for Cloudinary
-// app.use('/uploads', express.static(uploadDir));
-
-// Serve uploaded files statically - REMOVED for Cloudinary
-// app.use('/uploads', express.static(uploadDir));
 
 // --- Auth Routes ---
 
@@ -46,7 +41,13 @@ app.post('/api/auth/login', async (req, res) => {
             where: { username },
         });
 
-        if (!user || user.password !== password) {
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -62,8 +63,9 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
     const { username, password, fullName, role } = req.body;
     try {
+        const hashedPassword = await bcrypt.hash(password, 10);
         const user = await prisma.user.create({
-            data: { username, password, fullName, role },
+            data: { username, password: hashedPassword, fullName, role },
         });
         res.json(user);
     } catch (error) {

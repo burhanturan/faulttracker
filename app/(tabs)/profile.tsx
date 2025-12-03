@@ -41,69 +41,77 @@ export default function ProfileScreen() {
     };
 
     return (
-        <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'}`} contentContainerStyle={{ flexGrow: 1 }}>
-            <View className={`${isDark ? 'bg-dark-card' : 'bg-light-card'} flex-1 p-6 shadow-sm items-center`}>
-                <View className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} p-4 rounded-full mb-4`}>
-                    <FontAwesome name="user" size={60} color={isDark ? '#FFD700' : '#EAB308'} />
+        <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-gray-50'}`} contentContainerStyle={{ flexGrow: 1 }}>
+            <View className={`flex-1 p-6 items-center`}>
+                {/* Profile Icon */}
+                <View className={`${isDark ? 'bg-gray-700' : 'bg-gray-200'} p-6 rounded-full mb-4 shadow-lg`}>
+                    <FontAwesome name="user" size={70} color={isDark ? '#FFD700' : '#EAB308'} />
                 </View>
-                <Text className={`text-2xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-800'}`}>{user?.fullName}</Text>
-                <Text className={`mb-6 capitalize ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user?.role?.replace('_', ' ')}</Text>
+
+                {/* User Info */}
+                <Text className={`text-2xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.fullName}</Text>
+                <Text className={`mb-6 capitalize ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{user?.role?.replace('_', ' ')}</Text>
 
                 <View className="w-full">
-                    <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg border mb-4`}>
-                        <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Kullanıcı Adı</Text>
-                        <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{user?.username}</Text>
+                    {/* Username Card */}
+                    <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
+                        <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>KULLANICI ADI</Text>
+                        <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.username}</Text>
                     </View>
 
+                    {/* Email Card */}
                     {user?.email && (
-                        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg border mb-4`}>
-                            <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>E-posta</Text>
-                            <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{user?.email}</Text>
+                        <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
+                            <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>E-POSTA</Text>
+                            <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.email}</Text>
                         </View>
                     )}
 
+                    {/* Phone Card */}
                     {user?.phone && (
-                        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg border mb-4`}>
-                            <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Telefon</Text>
-                            <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{user?.phone}</Text>
+                        <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
+                            <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>TELEFON</Text>
+                            <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.phone}</Text>
                         </View>
                     )}
 
-                    <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg border mb-4`}>
-                        <Text className={`text-xs uppercase mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Tema</Text>
-                        <View className={`flex-row rounded-lg p-1 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                    {/* Theme Toggle */}
+                    <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
+                        <Text className={`text-xs uppercase mb-3 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>TEMA</Text>
+                        <View className={`flex-row rounded-lg p-1 ${isDark ? 'bg-[#1F2228]' : 'bg-gray-100'}`}>
                             <TouchableOpacity
                                 onPress={() => setTheme('light')}
-                                className={`flex-1 py-2 rounded-md items-center ${theme === 'light' ? 'bg-white shadow-sm' : ''}`}
+                                className={`flex-1 py-2 rounded-md items-center ${theme === 'light' ? (isDark ? 'bg-gray-600' : 'bg-white shadow-sm') : ''}`}
                             >
-                                <Text className={`font-medium ${theme === 'light' ? 'text-black' : 'text-gray-500'}`}>Açık</Text>
+                                <Text className={`font-medium ${theme === 'light' ? (isDark ? 'text-white' : 'text-gray-900') : 'text-gray-500'}`}>Açık</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => setTheme('dark')}
-                                className={`flex-1 py-2 rounded-md items-center ${theme === 'dark' ? 'bg-gray-600 shadow-sm' : ''}`}
+                                className={`flex-1 py-2 rounded-md items-center ${theme === 'dark' ? (isDark ? 'bg-gray-600' : 'bg-gray-900 shadow-sm') : ''}`}
                             >
                                 <Text className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`}>Koyu</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
 
+                    {/* Password Change Section */}
                     <TouchableOpacity
                         onPress={() => showChangePassword ? handleCancelPasswordChange() : setShowChangePassword(true)}
-                        className={`p-4 rounded-lg mb-3 flex-row justify-between items-center ${showChangePassword ? (isDark ? 'bg-dark-card border-dark-primary' : 'bg-light-card border-light-primary') : (isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200')}`}
+                        className={`p-4 rounded-lg mb-3 flex-row justify-between items-center ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}
                     >
-                        <Text className={`${showChangePassword ? (isDark ? 'text-dark-primary' : 'text-light-primary') : (isDark ? 'text-white' : 'text-gray-700')} font-medium`}>Şifre Değiştir</Text>
-                        <FontAwesome name={showChangePassword ? "chevron-up" : "chevron-down"} size={14} color={showChangePassword ? (isDark ? "#FFD700" : "#EAB308") : "#6B7280"} />
+                        <Text className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>Şifre Değiştir</Text>
+                        <FontAwesome name={showChangePassword ? "chevron-up" : "chevron-down"} size={14} color={isDark ? "#9CA3AF" : "#6B7280"} />
                     </TouchableOpacity>
 
                     {showChangePassword && (
-                        <View className={`mb-4 p-4 rounded-lg border shadow-sm ${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'}`}>
+                        <View className={`mb-4 p-4 rounded-lg ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
                             <TextInput
                                 placeholder="Yeni Şifre"
                                 placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                 value={newPassword}
                                 onChangeText={setNewPassword}
                                 secureTextEntry
-                                className={`p-3 rounded border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
+                                className={`p-3 rounded border mb-3 ${isDark ? 'bg-[#1F2228] border-gray-700 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
                             />
                             <TextInput
                                 placeholder="Şifreyi Onayla"
@@ -111,7 +119,7 @@ export default function ProfileScreen() {
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
                                 secureTextEntry
-                                className={`p-3 rounded border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
+                                className={`p-3 rounded border mb-3 ${isDark ? 'bg-[#1F2228] border-gray-700 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
                             />
                             {confirmPassword.length > 0 && newPassword !== confirmPassword && (
                                 <Text className="text-red-600 text-xs mb-3">Şifreler eşleşmiyor</Text>
@@ -120,18 +128,19 @@ export default function ProfileScreen() {
                                 <TouchableOpacity
                                     onPress={handleChangePassword}
                                     disabled={!newPassword || newPassword !== confirmPassword}
-                                    className={`flex-1 p-3 rounded-lg items-center ${(!newPassword || newPassword !== confirmPassword) ? 'bg-gray-300' : (isDark ? 'bg-dark-primary' : 'bg-light-primary')}`}
+                                    className={`flex-1 p-3 rounded-lg items-center ${(!newPassword || newPassword !== confirmPassword) ? (isDark ? 'bg-gray-700' : 'bg-gray-300') : (isDark ? 'bg-yellow-500' : 'bg-yellow-500')}`}
                                 >
-                                    <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold`}>Güncelle</Text>
+                                    <Text className={`font-bold ${(!newPassword || newPassword !== confirmPassword) ? 'text-gray-500' : 'text-black'}`}>Güncelle</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={handleCancelPasswordChange} className={`flex-1 p-3 rounded-lg items-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold`}>İptal</Text>
+                                <TouchableOpacity onPress={handleCancelPasswordChange} className={`flex-1 p-3 rounded-lg items-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} font-bold`}>İptal</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
                     )}
 
-                    <TouchableOpacity onPress={signOut} className={`p-4 rounded-lg border items-center mt-4 ${isDark ? 'bg-red-900/20 border-red-900' : 'bg-red-50 border-red-100'}`}>
+                    {/* Logout Button */}
+                    <TouchableOpacity onPress={signOut} className={`p-4 rounded-lg items-center mt-4 ${isDark ? 'bg-red-900/30 border border-red-900' : 'bg-red-50 border border-red-200'}`}>
                         <Text className="text-red-600 font-bold">Çıkış Yap</Text>
                     </TouchableOpacity>
                 </View>
