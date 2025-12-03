@@ -1,12 +1,7 @@
-import { Platform } from 'react-native';
 
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
-export const BASE_URL = Platform.select({
-    android: 'http://192.168.1.102:3000', // Use local IP for physical device & emulator
-    ios: 'http://192.168.1.102:3000', // Your local IP
-    default: 'http://localhost:3000',
-});
+export const BASE_URL = 'https://fault-tracker-backend.onrender.com';
 
 const API_URL = `${BASE_URL}/api`;
 

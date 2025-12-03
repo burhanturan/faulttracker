@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "React-Native-Proejct",
+    "name": "Fault Tracker",
     "slug": "React-Native-Proejct",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,6 +36,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e124a95d-9511-4ca0-a228-3a8e454df95a"
+      }
     }
   }
 }
