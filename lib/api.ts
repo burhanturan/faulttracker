@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 // CHANGE THIS TO 'true' WHEN DEVELOPING LOCALLY
-const IS_DEV = true;
+const IS_DEV = false;
 
 export const BASE_URL = IS_DEV
     ? Platform.select({
