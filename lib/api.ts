@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 // Use localhost for web/iOS simulator, 10.0.2.2 for Android emulator, and local IP for real device
 // CHANGE THIS TO 'true' WHEN DEVELOPING LOCALLY
-const IS_DEV = false;
+const IS_DEV = true;
 
 export const BASE_URL = IS_DEV
     ? Platform.select({
@@ -22,11 +22,12 @@ export const api = {
         if (!res.ok) throw new Error('API Error');
         return res.json();
     },
-    post: async (endpoint: string, body: any) => {
+    post: async (endpoint: string, body: any, isMultipart = false) => {
+        const headers: any = isMultipart ? {} : { 'Content-Type': 'application/json' };
         const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            headers,
+            body: isMultipart ? body : JSON.stringify(body),
         });
         if (!res.ok) {
             const error = await res.json();

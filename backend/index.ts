@@ -101,15 +101,20 @@ app.get('/api/faults', async (req, res) => {
 });
 
 // Create Fault
-app.post('/api/faults', async (req, res) => {
+// Create Fault
+app.post('/api/faults', upload.any(), async (req, res) => {
     const { title, description, reportedById, chiefdomId, status, faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel } = req.body;
+    if (!reportedById) {
+        return res.status(400).json({ error: 'Reported By ID is required' });
+    }
+
     try {
         const fault = await prisma.fault.create({
             data: {
                 title,
                 description,
-                reportedById,
-                chiefdomId,
+                reportedById: parseInt(reportedById),
+                chiefdomId: chiefdomId ? parseInt(chiefdomId) : undefined,
                 status: status || 'open',
                 // Optional closure fields
                 faultDate,
@@ -122,18 +127,42 @@ app.post('/api/faults', async (req, res) => {
                 tcddPersonnel
             },
         });
+
+        // Handle Image Records
+        if (req.files && Array.isArray(req.files)) {
+            const imagePromises = (req.files as Express.Multer.File[]).map(file => {
+                return prisma.faultImage.create({
+                    data: {
+                        url: file.path, // Cloudinary URL
+                        faultId: fault.id
+                    }
+                });
+            });
+            await Promise.all(imagePromises);
+        }
+
         res.json(fault);
     } catch (error) {
+        console.error('Create Fault Error:', error);
         res.status(400).json({ error: 'Failed to create fault' });
     }
 });
 
 // Update Fault (Close/Assign) - Supports Image Upload
-app.put('/api/faults/:id', upload.any(), async (req, res) => {
+app.put('/api/faults/:id', (req, res, next) => {
+    upload.any()(req, res, (err) => {
+        if (err) {
+            console.error('Multer Error:', err);
+            return res.status(400).json({ error: err.message });
+        }
+        next();
+    });
+}, async (req, res) => {
     const { id } = req.params;
     console.log(`PUT /api/faults/${id} called`);
-    console.log('Files:', req.files);
-    console.log('Body:', req.body);
+    // console.log('Content-Type:', req.headers['content-type']);
+    // console.log('Files:', req.files);
+    // console.log('Body:', req.body);
 
     const { status, assignedToId, faultDate, faultTime, reporterName, lineInfo, closureFaultInfo, solution, workingPersonnel, tcddPersonnel } = req.body;
 
@@ -177,6 +206,39 @@ app.put('/api/faults/:id', upload.any(), async (req, res) => {
     } catch (error) {
         console.error('Update Error:', error);
         res.status(400).json({ error: 'Failed to update fault' });
+    }
+});
+
+// Delete Fault
+app.delete('/api/faults/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // First delete associated images
+        await prisma.faultImage.deleteMany({
+            where: { faultId: parseInt(id) }
+        });
+
+        await prisma.fault.delete({
+            where: { id: parseInt(id) },
+        });
+        res.json({ message: 'Fault deleted' });
+    } catch (error) {
+        console.error('Delete Fault Error:', error);
+        res.status(400).json({ error: 'Failed to delete fault' });
+    }
+});
+
+// Delete Fault Image
+app.delete('/api/faults/images/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.faultImage.delete({
+            where: { id: parseInt(id) }
+        });
+        res.json({ message: 'Image deleted' });
+    } catch (error) {
+        console.error('Delete Image Error:', error);
+        res.status(400).json({ error: 'Failed to delete image' });
     }
 });
 
