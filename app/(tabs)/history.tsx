@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../lib/api';
@@ -119,7 +120,7 @@ export default function HistoryScreen() {
             mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [4, 3],
-            quality: 0.5,
+            quality: 0.3,
         });
 
         if (!result.canceled) {
@@ -136,8 +137,6 @@ export default function HistoryScreen() {
             let endpoint = '/faults';
             if (user?.role === 'worker' && (user as any).chiefdomId) {
                 endpoint += `?chiefdomId=${(user as any).chiefdomId}`;
-            } else if (user?.role === 'ctc') {
-                endpoint += `?reportedById=${user.id}`;
             }
 
             const data = await api.get(endpoint);
@@ -251,18 +250,22 @@ export default function HistoryScreen() {
     const handleDeleteFault = (id: number) => {
         showAlert('Arızayı Sil', 'Bu arıza kaydını silmek istediğinize emin misiniz?', 'confirm', async () => {
             try {
+                setLoading(true); // Start loading
                 await api.delete(`/faults/${id}`);
                 showAlert('Başarılı', 'Arıza silindi', 'success');
                 setSelectedFault(null);
                 fetchHistory();
             } catch (error) {
-                showAlert('Hata', 'Silme işlemi başarısız', 'error');
+                showAlert('Hata', 'Güncelleme başarısız', 'error');
+            } finally {
+                setLoading(false); // End loading
             }
         });
     };
 
     const handleDeleteImage = async (imageId: number) => {
         try {
+            setLoading(true); // Start loading
             await api.delete(`/faults/images/${imageId}`);
             // Remove from local state
             setEditForm(prev => ({
@@ -271,7 +274,9 @@ export default function HistoryScreen() {
             }));
             showAlert('Başarılı', 'Fotoğraf silindi', 'success');
         } catch (error) {
-            showAlert('Hata', 'Fotoğraf silinemedi', 'error');
+            showAlert('Hata', 'Kayıt oluşturulamadı', 'error');
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
@@ -325,6 +330,7 @@ export default function HistoryScreen() {
         }
 
         try {
+            setLoading(true); // Start loading
             const formData = new FormData();
             formData.append('title', createForm.title);
             formData.append('description', createForm.description);
@@ -377,6 +383,8 @@ export default function HistoryScreen() {
         } catch (error) {
             console.error(error);
             showAlert('Hata', 'Arıza oluşturulamadı', 'error');
+        } finally {
+            setLoading(false); // End loading
         }
     };
 
@@ -543,6 +551,7 @@ export default function HistoryScreen() {
                     onClose={closeAlert}
                     onConfirm={alertConfig.onConfirm}
                 />
+                <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
             </KeyboardAvoidingView >
         );
     }
@@ -656,6 +665,7 @@ export default function HistoryScreen() {
                     onClose={closeAlert}
                     onConfirm={alertConfig.onConfirm}
                 />
+                <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
             </KeyboardAvoidingView >
         );
     }
@@ -675,7 +685,7 @@ export default function HistoryScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {loading ? (
+                {loading && !refreshing ? (
                     <Text className="text-gray-500">Geçmiş yükleniyor...</Text>
                 ) : (
                     <>
@@ -714,6 +724,7 @@ export default function HistoryScreen() {
                 onClose={closeAlert}
                 onConfirm={alertConfig.onConfirm}
             />
+            <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
         </KeyboardAvoidingView>
     );
 }

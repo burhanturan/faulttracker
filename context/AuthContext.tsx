@@ -15,13 +15,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
 
     const signIn = async (username: string, password: string) => {
-        try {
-            const user = await api.post('/auth/login', { username, password });
-            setUser(user);
-            router.replace('/(tabs)');
-        } catch (error) {
-            alert('Login failed. Check username or server connection.');
-        }
+        const user = await api.post('/auth/login', { username, password });
+        setUser(user);
+        router.replace('/(tabs)');
     };
 
     const signOut = () => {

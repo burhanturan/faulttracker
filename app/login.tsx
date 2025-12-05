@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomAlert from '../components/CustomAlert';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -14,6 +15,32 @@ export default function LoginScreen() {
     const { signIn } = useAuth();
     const { actualTheme } = useTheme();
     const isDark = actualTheme === 'dark';
+
+    // Custom Alert State
+    const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
+        visible: false, title: '', message: '', type: 'info'
+    });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+        setAlertConfig({ visible: true, title, message, type, onConfirm });
+    };
+
+    const closeAlert = () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    };
+
+    const handleLogin = async () => {
+        if (!username || !password) {
+            showAlert('Eksik Bilgi', 'Lütfen kullanıcı adı ve şifrenizi giriniz.', 'error');
+            return;
+        }
+
+        try {
+            await signIn(username, password);
+        } catch (error) {
+            showAlert('Giriş Başarısız', 'Kullanıcı adı veya şifre hatalı.', 'error');
+        }
+    };
 
     return (
         <View className="flex-1">
@@ -92,7 +119,7 @@ export default function LoginScreen() {
                                 {/* Sign In Button */}
                                 <TouchableOpacity
                                     className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} h-12 rounded-md items-center justify-center active:opacity-90 shadow-md`}
-                                    onPress={() => signIn(username, password)}
+                                    onPress={handleLogin}
                                 >
                                     <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg uppercase tracking-wide`}>Giriş Yap</Text>
                                 </TouchableOpacity>
@@ -101,6 +128,7 @@ export default function LoginScreen() {
                     </KeyboardAvoidingView>
                 </SafeAreaView>
             </LinearGradient>
+            <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
         </View>
     );
 }

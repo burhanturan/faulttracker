@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
+import LoadingOverlay from '../../components/LoadingOverlay';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../lib/api';
@@ -39,6 +40,23 @@ function ActionButtons({ actions }: { actions: string[] }) {
 
 // --- Role Dashboards ---
 
+const getMimeType = (filename: string) => {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    default:
+      return 'image/jpeg';
+  }
+};
+
 function CTCDashboard() {
   const { user } = useAuth();
   const { actualTheme } = useTheme();
@@ -55,6 +73,19 @@ function CTCDashboard() {
   const [allFaults, setAllFaults] = useState<any[]>([]);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
+    visible: false, title: '', message: '', type: 'info'
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+    setAlertConfig({ visible: true, title, message, type, onConfirm });
+  };
+
+  const closeAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
+
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
@@ -64,7 +95,7 @@ function CTCDashboard() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       selectionLimit: 5,
-      quality: 0.8,
+      quality: 0.3,
     });
 
     if (!result.canceled) {
@@ -112,7 +143,7 @@ function CTCDashboard() {
       setAllFaults(data.filter((f: any) => f.status === 'open'));
       setView('all_faults');
     } catch (error) {
-      alert('Arızalar alınamadı');
+      showAlert('Hata', 'Arızalar alınamadı', 'error');
     }
   };
 
@@ -120,10 +151,11 @@ function CTCDashboard() {
     if (!closingFaultId) return;
 
     if (!closureForm.solution || !closureForm.faultDate) {
-      alert('Lütfen en az Tarih ve Çözüm alanlarını doldurunuz.');
+      showAlert('Eksik Bilgi', 'Lütfen en az Tarih ve Çözüm alanlarını doldurunuz.', 'error');
       return;
     }
 
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append('status', 'closed');
@@ -136,16 +168,27 @@ function CTCDashboard() {
       formData.append('workingPersonnel', closureForm.personnel);
       formData.append('tcddPersonnel', closureForm.tcddPersonnel);
 
-      selectedImages.forEach((image, index) => {
-        formData.append('images', {
-          uri: image.uri,
-          type: 'image/jpeg', // Adjust based on actual type if needed
-          name: `image_${index}.jpg`
-        } as any);
-      });
+      if (selectedImages.length > 0) {
+        for (const image of selectedImages) {
+          const filename = image.uri.split('/').pop() || 'image.jpg';
+          const type = getMimeType(filename);
+
+          if (Platform.OS === 'web') {
+            const response = await fetch(image.uri);
+            const blob = await response.blob();
+            formData.append('images', blob, filename);
+          } else {
+            formData.append('images', {
+              uri: image.uri,
+              type: type,
+              name: filename
+            } as any);
+          }
+        }
+      }
 
       await api.put(`/faults/${closingFaultId}`, formData, true); // true for multipart
-      alert('Arıza başarıyla kapatıldı!');
+      showAlert('Başarılı', 'Arıza başarıyla kapatıldı!', 'success');
       setClosingFaultId(null);
       setSelectedImages([]);
       setClosureForm({
@@ -160,7 +203,9 @@ function CTCDashboard() {
       });
       fetchAllFaults(); // Refresh list
     } catch (error) {
-      alert('Arıza kapatılamadı');
+      showAlert('Hata', 'Arıza kapatılamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -182,17 +227,22 @@ function CTCDashboard() {
 
   const fetchHistory = async () => {
     try {
-      const data = await api.get(`/faults?reportedById=${user?.id}`);
+      let endpoint = `/faults?reportedById=${user?.id}`;
+      // CTC Watchman should see all history
+      if (user?.role === 'ctc_watchman') {
+        endpoint = '/faults';
+      }
+      const data = await api.get(endpoint);
       setHistory(data);
       setView('history');
     } catch (error) {
-      alert('Geçmiş alınamadı');
+      showAlert('Hata', 'Geçmiş alınamadı', 'error');
     }
   };
 
   const handleSubmit = async () => {
     if (!title || !description || !chiefdomId) {
-      alert('Lütfen tüm alanları doldurunuz');
+      showAlert('Eksik Bilgi', 'Lütfen tüm alanları doldurunuz', 'error');
       return;
     }
     setLoading(true);
@@ -203,12 +253,12 @@ function CTCDashboard() {
         reportedById: parseInt(user?.id || '0'),
         chiefdomId: parseInt(chiefdomId)
       });
-      alert('Arıza bildirimi oluşturuldu');
+      showAlert('Başarılı', 'Arıza bildirimi oluşturuldu', 'success');
       setTitle('');
       setDescription('');
       setChiefdomId('');
     } catch (error) {
-      alert('Arıza bildirilemedi');
+      showAlert('Hata', 'Arıza bildirilemedi', 'error');
     } finally {
       setLoading(false);
     }
@@ -235,6 +285,8 @@ function CTCDashboard() {
           </View>
         ))}
         {history.length === 0 && <Text className="text-gray-500 text-center mt-4">Henüz arıza bildirilmedi.</Text>}
+        <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+        <LoadingOverlay visible={loading} message="İşlem yapılıyor..." />
       </View>
     );
   }
@@ -306,6 +358,8 @@ function CTCDashboard() {
               </TouchableOpacity>
             </View>
           </View>
+          <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+          <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
         </View>
       );
     }
@@ -335,6 +389,8 @@ function CTCDashboard() {
           </TouchableOpacity>
         ))}
         {allFaults.length === 0 && <Text className="text-gray-500 text-center mt-4">Aktif arıza yok.</Text>}
+        <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+        <LoadingOverlay visible={loading} />
       </View>
     );
   }
@@ -390,6 +446,8 @@ function CTCDashboard() {
             <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Raporu Gönder</Text>
           </TouchableOpacity>
         </View>
+        <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+        <LoadingOverlay visible={loading} message="Arıza bildiriliyor..." />
       </View>
     );
   }
@@ -407,6 +465,8 @@ function CTCDashboard() {
       <TouchableOpacity onPress={fetchAllFaults}>
         <DashboardCard title="Tüm Arızalar" value="Aktif Arızaları Yönet" color="bg-red-100 text-red-800" />
       </TouchableOpacity>
+      <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+      <LoadingOverlay visible={loading} />
     </View>
   );
 }
@@ -421,6 +481,7 @@ function AdminDashboard() {
   const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user'>('overview');
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Custom Alert State
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
@@ -444,7 +505,7 @@ function AdminDashboard() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       selectionLimit: 5,
-      quality: 0.8,
+      quality: 0.3,
     });
 
     if (!result.canceled) {
@@ -533,6 +594,7 @@ function AdminDashboard() {
       return;
     }
 
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append('status', 'closed');
@@ -545,13 +607,24 @@ function AdminDashboard() {
       formData.append('workingPersonnel', closureForm.personnel);
       formData.append('tcddPersonnel', closureForm.tcddPersonnel);
 
-      selectedImages.forEach((image, index) => {
-        formData.append('images', {
-          uri: image.uri,
-          type: 'image/jpeg', // Adjust based on actual type if needed
-          name: `image_${index}.jpg`
-        } as any);
-      });
+      if (selectedImages.length > 0) {
+        for (const image of selectedImages) {
+          const filename = image.uri.split('/').pop() || 'image.jpg';
+          const type = getMimeType(filename);
+
+          if (Platform.OS === 'web') {
+            const response = await fetch(image.uri);
+            const blob = await response.blob();
+            formData.append('images', blob, filename);
+          } else {
+            formData.append('images', {
+              uri: image.uri,
+              type: type,
+              name: filename
+            } as any);
+          }
+        }
+      }
 
       await api.put(`/faults/${closingFaultId}`, formData, true); // true for multipart
       showAlert('Başarılı', 'Arıza başarıyla kapatıldı!', 'success');
@@ -570,6 +643,8 @@ function AdminDashboard() {
       fetchData(); // Refresh list
     } catch (error) {
       showAlert('Hata', 'Arıza kapatılamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -614,6 +689,7 @@ function AdminDashboard() {
       return;
     }
 
+    setLoading(true);
     try {
       await api.post('/users', { ...createUserForm });
       showAlert('Başarılı', 'Kullanıcı başarıyla oluşturuldu!', 'success');
@@ -621,6 +697,8 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       showAlert('Hata', 'Kullanıcı oluşturulamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -647,6 +725,7 @@ function AdminDashboard() {
       return;
     }
 
+    setLoading(true);
     try {
       // Only send password if it's not empty (meaning user wants to change it)
       const updateData: any = { ...editUserForm };
@@ -658,17 +737,22 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       showAlert('Hata', 'Kullanıcı güncellenemedi', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteUser = (id: string) => {
     showAlert('Kullanıcıyı Sil', 'Bu kullanıcıyı silmek istediğinize emin misiniz?', 'confirm', async () => {
+      setLoading(true);
       try {
         await api.delete(`/users/${id}`);
         showAlert('Başarılı', 'Kullanıcı silindi', 'success');
         fetchData();
       } catch (error) {
         showAlert('Hata', 'Kullanıcı silinemedi', 'error');
+      } finally {
+        setLoading(false);
       }
     });
   };
@@ -692,6 +776,7 @@ function AdminDashboard() {
   };
 
   const handleCreateChiefdom = async () => {
+    setLoading(true);
     try {
       await api.post('/chiefdoms', { name: newChiefdom });
       showAlert('Başarılı', 'Şeflik oluşturuldu', 'success');
@@ -699,23 +784,29 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       showAlert('Hata', 'Şeflik oluşturulamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteChiefdom = (id: string) => {
     showAlert('Şefliği Sil', 'Bu şefliği silmek istediğinize emin misiniz?', 'confirm', async () => {
+      setLoading(true);
       try {
         await api.delete(`/chiefdoms/${id}`);
         showAlert('Başarılı', 'Şeflik silindi', 'success');
         fetchData();
       } catch (error) {
         showAlert('Hata', 'Şeflik silinemedi', 'error');
+      } finally {
+        setLoading(false);
       }
     });
   };
 
   const handleUpdateChiefdom = async () => {
     if (!editChiefdomName) return;
+    setLoading(true);
     try {
       await api.put(`/chiefdoms/${editingChiefdomId}`, { name: editChiefdomName });
       showAlert('Başarılı', 'Şeflik güncellendi', 'success');
@@ -723,6 +814,8 @@ function AdminDashboard() {
       fetchData();
     } catch (error) {
       showAlert('Hata', 'Şeflik güncellenemedi', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -803,6 +896,7 @@ function AdminDashboard() {
             </View>
           ))}
           {users.length === 0 && <Text className="text-gray-500 text-center mt-4">Kullanıcı bulunamadı.</Text>}
+          <LoadingOverlay visible={loading} />
         </View>
       );
     }
@@ -847,6 +941,7 @@ function AdminDashboard() {
 
             <TouchableOpacity onPress={handleCreateUser} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded items-center mt-4`}><Text className={`${isDark ? 'text-black' : 'text-white'} font-bold`}>Kullanıcı Oluştur</Text></TouchableOpacity>
           </View>
+          <LoadingOverlay visible={loading} />
         </View>
       );
     }
@@ -914,6 +1009,7 @@ function AdminDashboard() {
               </View>
             </View>
           ))}
+          <LoadingOverlay visible={loading} />
         </View>
       );
     }
@@ -985,6 +1081,7 @@ function AdminDashboard() {
                 </TouchableOpacity>
               </View>
             </View>
+            <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
           </View >
         );
       }
@@ -1014,6 +1111,7 @@ function AdminDashboard() {
             </TouchableOpacity>
           ))}
           {faults.length === 0 && <Text className="text-gray-500 text-center mt-4">Aktif arıza yok.</Text>}
+          <LoadingOverlay visible={loading} />
         </View>
       );
     }
@@ -1039,6 +1137,7 @@ function AdminDashboard() {
         <TouchableOpacity onPress={() => setView('users')}>
           <DashboardCard title="Kullanıcılar" value={users.length.toString()} color="bg-purple-100 text-purple-800" />
         </TouchableOpacity>
+        <LoadingOverlay visible={loading} />
       </View>
     );
   };
@@ -1157,6 +1256,7 @@ function WorkerDashboard() {
       return;
     }
 
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append('status', 'closed');
@@ -1194,6 +1294,8 @@ function WorkerDashboard() {
       fetchFaults();
     } catch (error) {
       alert('Arıza kapatılamadı');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1277,9 +1379,11 @@ function WorkerDashboard() {
             <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
               <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
             </TouchableOpacity>
+
           </View>
+          <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
         </View>
-      </View>
+      </View >
     );
   }
 
@@ -1318,6 +1422,7 @@ function WorkerDashboard() {
           {faults.length === 0 && <Text className="text-gray-500 text-center mt-4">Şefliğinize atanmış arıza yok.</Text>}
         </>
       )}
+      <LoadingOverlay visible={loading} />
     </View>
   );
 }
@@ -1332,7 +1437,6 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (user?.role) {
       case 'admin': return <AdminDashboard />;
-      case 'ctc': return <CTCDashboard />;
       case 'ctc_watchman': return <CTCDashboard />;
       case 'engineer': return <AdminDashboard />; // Engineers now use AdminDashboard
       case 'worker': return <WorkerDashboard />;
