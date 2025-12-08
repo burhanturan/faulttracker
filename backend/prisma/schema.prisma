@@ -7,19 +7,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Region {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  projects    Project[]
+}
+
 model Project {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  chiefdoms Chiefdom[]
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  regionId    Int?
+  region      Region?  @relation(fields: [regionId], references: [id])
+  chiefdoms   Chiefdom[]
 }
 
 model Chiefdom {
   id        Int      @id @default(autoincrement())
   name      String   @unique
+  startKm   String?
+  endKm     String?
   projectId Int?
   project   Project? @relation(fields: [projectId], references: [id])
   faults    Fault[]
   users     User[]
+
+  stations          Station[]
+  levelCrossings    LevelCrossing[]
+  technicalBuildings TechnicalBuilding[]
+}
+
+model Station {
+  id         Int      @id @default(autoincrement())
+  name       String
+  km         String?
+  chiefdomId Int
+  chiefdom   Chiefdom @relation(fields: [chiefdomId], references: [id], onDelete: Cascade)
+}
+
+model LevelCrossing {
+  id         Int      @id @default(autoincrement())
+  name       String
+  km         String?
+  type       String?  // Bariyerli, Otomatik vb.
+  chiefdomId Int
+  chiefdom   Chiefdom @relation(fields: [chiefdomId], references: [id], onDelete: Cascade)
+}
+
+model TechnicalBuilding {
+  id         Int      @id @default(autoincrement())
+  name       String
+  km         String?
+  type       String?  // OBS, Teknik Merkez vb.
+  chiefdomId Int
+  chiefdom   Chiefdom @relation(fields: [chiefdomId], references: [id], onDelete: Cascade)
 }
 
 model User {

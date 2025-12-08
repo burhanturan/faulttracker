@@ -271,15 +271,33 @@ app.put('/api/faults/:id/close', async (req, res) => {
     }
 });
 
+// --- Region Routes ---
+
+app.get('/api/regions', async (req, res) => {
+    try {
+        const regions = await prisma.region.findMany({ include: { projects: true } });
+        res.json(regions);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch regions' });
+    }
+});
+
+app.post('/api/regions', async (req, res) => {
+    const { name, description } = req.body;
+    try {
+        const region = await prisma.region.create({ data: { name, description } });
+        res.json(region);
+    } catch (error) {
+        res.status(400).json({ error: 'Failed to create region' });
+    }
+});
+
 // --- Project Routes ---
 
-// Get All Projects
 app.get('/api/projects', async (req, res) => {
     try {
         const projects = await prisma.project.findMany({
-            include: {
-                chiefdoms: true
-            }
+            include: { chiefdoms: true, region: true }
         });
         res.json(projects);
     } catch (error) {
@@ -287,12 +305,15 @@ app.get('/api/projects', async (req, res) => {
     }
 });
 
-// Create Project
 app.post('/api/projects', async (req, res) => {
-    const { name } = req.body;
+    const { name, description, regionId } = req.body;
     try {
         const project = await prisma.project.create({
-            data: { name },
+            data: {
+                name,
+                description,
+                regionId: regionId ? parseInt(regionId) : undefined
+            },
         });
         res.json(project);
     } catch (error) {
@@ -302,13 +323,15 @@ app.post('/api/projects', async (req, res) => {
 
 // --- Chiefdom Routes ---
 
-// Get All Chiefdoms
 app.get('/api/chiefdoms', async (req, res) => {
     try {
         const chiefdoms = await prisma.chiefdom.findMany({
             include: {
-                users: true, // Include workers
-                project: true // Include project info
+                users: true,
+                project: true,
+                stations: true,
+                levelCrossings: true,
+                technicalBuildings: true
             }
         });
         res.json(chiefdoms);
@@ -317,13 +340,14 @@ app.get('/api/chiefdoms', async (req, res) => {
     }
 });
 
-// Create Chiefdom
 app.post('/api/chiefdoms', async (req, res) => {
-    const { name, projectId } = req.body;
+    const { name, projectId, startKm, endKm } = req.body;
     try {
         const chiefdom = await prisma.chiefdom.create({
             data: {
                 name,
+                startKm,
+                endKm,
                 projectId: projectId ? parseInt(projectId) : undefined
             },
         });
@@ -333,19 +357,79 @@ app.post('/api/chiefdoms', async (req, res) => {
     }
 });
 
-// Update Chiefdom
 app.put('/api/chiefdoms/:id', async (req, res) => {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, startKm, endKm, projectId } = req.body;
     try {
         const chiefdom = await prisma.chiefdom.update({
             where: { id: parseInt(id) },
-            data: { name },
+            data: {
+                name,
+                startKm,
+                endKm,
+                projectId: projectId ? parseInt(projectId) : undefined
+            },
         });
         res.json(chiefdom);
     } catch (error) {
         res.status(400).json({ error: 'Failed to update chiefdom' });
     }
+});
+
+// --- Infrastructure Routes ---
+
+// Stations
+app.post('/api/stations', async (req, res) => {
+    const { name, km, chiefdomId } = req.body;
+    try {
+        const station = await prisma.station.create({
+            data: { name, km, chiefdomId: parseInt(chiefdomId) }
+        });
+        res.json(station);
+    } catch { res.status(400).json({ error: 'Failed' }); }
+});
+
+app.delete('/api/stations/:id', async (req, res) => {
+    try {
+        await prisma.station.delete({ where: { id: parseInt(req.params.id) } });
+        res.json({ success: true });
+    } catch { res.status(400).json({ error: 'Failed' }); }
+});
+
+// Level Crossings
+app.post('/api/level-crossings', async (req, res) => {
+    const { name, km, type, chiefdomId } = req.body;
+    try {
+        const lc = await prisma.levelCrossing.create({
+            data: { name, km, type, chiefdomId: parseInt(chiefdomId) }
+        });
+        res.json(lc);
+    } catch { res.status(400).json({ error: 'Failed' }); }
+});
+
+app.delete('/api/level-crossings/:id', async (req, res) => {
+    try {
+        await prisma.levelCrossing.delete({ where: { id: parseInt(req.params.id) } });
+        res.json({ success: true });
+    } catch { res.status(400).json({ error: 'Failed' }); }
+});
+
+// Technical Buildings
+app.post('/api/technical-buildings', async (req, res) => {
+    const { name, km, type, chiefdomId } = req.body;
+    try {
+        const tb = await prisma.technicalBuilding.create({
+            data: { name, km, type, chiefdomId: parseInt(chiefdomId) }
+        });
+        res.json(tb);
+    } catch { res.status(400).json({ error: 'Failed' }); }
+});
+
+app.delete('/api/technical-buildings/:id', async (req, res) => {
+    try {
+        await prisma.technicalBuilding.delete({ where: { id: parseInt(req.params.id) } });
+        res.json({ success: true });
+    } catch { res.status(400).json({ error: 'Failed' }); }
 });
 
 // Delete Chiefdom
