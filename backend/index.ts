@@ -271,6 +271,35 @@ app.put('/api/faults/:id/close', async (req, res) => {
     }
 });
 
+// --- Project Routes ---
+
+// Get All Projects
+app.get('/api/projects', async (req, res) => {
+    try {
+        const projects = await prisma.project.findMany({
+            include: {
+                chiefdoms: true
+            }
+        });
+        res.json(projects);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+});
+
+// Create Project
+app.post('/api/projects', async (req, res) => {
+    const { name } = req.body;
+    try {
+        const project = await prisma.project.create({
+            data: { name },
+        });
+        res.json(project);
+    } catch (error) {
+        res.status(400).json({ error: 'Failed to create project' });
+    }
+});
+
 // --- Chiefdom Routes ---
 
 // Get All Chiefdoms
@@ -278,7 +307,8 @@ app.get('/api/chiefdoms', async (req, res) => {
     try {
         const chiefdoms = await prisma.chiefdom.findMany({
             include: {
-                users: true // Include workers
+                users: true, // Include workers
+                project: true // Include project info
             }
         });
         res.json(chiefdoms);
@@ -289,10 +319,13 @@ app.get('/api/chiefdoms', async (req, res) => {
 
 // Create Chiefdom
 app.post('/api/chiefdoms', async (req, res) => {
-    const { name } = req.body;
+    const { name, projectId } = req.body;
     try {
         const chiefdom = await prisma.chiefdom.create({
-            data: { name },
+            data: {
+                name,
+                projectId: projectId ? parseInt(projectId) : undefined
+            },
         });
         res.json(chiefdom);
     } catch (error) {

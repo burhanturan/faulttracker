@@ -1,6 +1,7 @@
+import { useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
 import LoadingOverlay from '../../components/LoadingOverlay';
@@ -63,13 +64,16 @@ function CTCDashboard() {
   const isDark = actualTheme === 'dark';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [reporterName, setReporterName] = useState('');
+  const [faultDate, setFaultDate] = useState('');
+  const [faultTime, setFaultTime] = useState('');
   const [chiefdomId, setChiefdomId] = useState('');
   const [chiefdoms, setChiefdoms] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
 
-  // Unified View State
-  const [view, setView] = useState<'overview' | 'history' | 'all_faults' | 'report_fault'>('overview');
+  // Default to list view ('all_faults')
+  const [view, setView] = useState<'all_faults' | 'history' | 'report_fault'>('all_faults');
   const [allFaults, setAllFaults] = useState<any[]>([]);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
 
@@ -118,32 +122,43 @@ function CTCDashboard() {
 
   useEffect(() => {
     api.get('/chiefdoms').then(setChiefdoms).catch(console.error);
+    fetchAllFaults(); // Fetch on mount
   }, []);
 
   const navigation = useNavigation();
 
   useEffect(() => {
     const unsubscribe = (navigation as any).addListener('tabPress', (e: any) => {
-      setView('overview');
+      setView('all_faults');
       setClosingFaultId(null);
+      fetchAllFaults();
     });
     return unsubscribe;
   }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {
-      setView('overview');
+      setView('all_faults');
       setClosingFaultId(null);
+      fetchAllFaults();
+      const now = new Date();
+      setFaultDate(now.toLocaleDateString('tr-TR'));
+      setFaultTime(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }));
     }, [])
   );
 
   const fetchAllFaults = async () => {
     try {
+      setLoading(true);
       const data = await api.get('/faults');
-      setAllFaults(data.filter((f: any) => f.status === 'open'));
-      setView('all_faults');
+      // Sort by newest first
+      const sortedData = data.filter((f: any) => f.status === 'open').sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setAllFaults(sortedData);
+      //   setView('all_faults'); // Already default
     } catch (error) {
       showAlert('Hata', 'Arızalar alınamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -227,6 +242,7 @@ function CTCDashboard() {
 
   const fetchHistory = async () => {
     try {
+      setLoading(true);
       let endpoint = `/faults?reportedById=${user?.id}`;
       // CTC Watchman should see all history
       if (user?.role === 'ctc_watchman') {
@@ -237,6 +253,8 @@ function CTCDashboard() {
       setView('history');
     } catch (error) {
       showAlert('Hata', 'Geçmiş alınamadı', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -250,13 +268,19 @@ function CTCDashboard() {
       await api.post('/faults', {
         title,
         description,
+        reporterName,
+        faultDate,
+        faultTime,
         reportedById: parseInt(user?.id || '0'),
         chiefdomId: parseInt(chiefdomId)
       });
       showAlert('Başarılı', 'Arıza bildirimi oluşturuldu', 'success');
       setTitle('');
       setDescription('');
+      setReporterName('');
       setChiefdomId('');
+      fetchAllFaults(); // Refresh current list if user goes back
+      // Optionally stay on report page or go back. Let's stay and show success.
     } catch (error) {
       showAlert('Hata', 'Arıza bildirilemedi', 'error');
     } finally {
@@ -267,10 +291,10 @@ function CTCDashboard() {
   if (view === 'history') {
     return (
       <View className="gap-4">
-        <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-          <Text className="text-black font-bold">← Rapor Formuna Dön</Text>
+        <TouchableOpacity onPress={() => setView('all_faults')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
+          <Text className="text-black font-bold">← Listeye Dön</Text>
         </TouchableOpacity>
-        <Text className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Bildirdiğim Arızalar</Text>
+        <Text className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Arıza Geçmişi</Text>
         {history.map((fault) => (
           <View key={fault.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
             <View className="flex-row justify-between items-start">
@@ -366,9 +390,16 @@ function CTCDashboard() {
 
     return (
       <View className="gap-4">
-        <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-          <Text className="text-black font-bold">← Geri</Text>
-        </TouchableOpacity>
+        {/* Helper Action Buttons for Watchman */}
+        <View className="flex-row gap-3 mb-2">
+          <TouchableOpacity onPress={() => setView('report_fault')} className="flex-1 bg-yellow-400 p-3 rounded-lg items-center shadow-sm">
+            <Text className="text-black font-bold">+ Arıza Bildir</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={fetchHistory} className="flex-1 bg-yellow-400 p-3 rounded-lg items-center shadow-sm">
+            <Text className="text-black font-bold">Geçmiş Arızalarım</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Tüm Aktif Arızalar</Text>
 
         {allFaults.map(f => (
@@ -398,8 +429,8 @@ function CTCDashboard() {
   if (view === 'report_fault') {
     return (
       <View className="gap-6">
-        <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-          <Text className="text-black font-bold">← Geri</Text>
+        <TouchableOpacity onPress={() => setView('all_faults')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
+          <Text className="text-black font-bold">← Listeye Dön</Text>
         </TouchableOpacity>
 
         <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
@@ -423,6 +454,36 @@ function CTCDashboard() {
             textAlignVertical="top"
             value={description}
             onChangeText={setDescription}
+          />
+
+          <View className="flex-row gap-2 mb-4">
+            <View className="flex-1">
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Tarih</Text>
+              <TextInput
+                className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                value={faultDate}
+                onChangeText={setFaultDate}
+                placeholder="GG.AA.YYYY"
+              />
+            </View>
+            <View className="flex-1">
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Saat</Text>
+              <TextInput
+                className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                value={faultTime}
+                onChangeText={setFaultTime}
+                placeholder="SS:DD"
+              />
+            </View>
+          </View>
+
+          <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Bildirilen Personel</Text>
+          <TextInput
+            className={`border rounded-lg p-3 mb-4 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+            placeholder="Personel Adı Soyadı"
+            placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+            value={reporterName}
+            onChangeText={setReporterName}
           />
 
           <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Şefliğe Ata</Text>
@@ -452,23 +513,8 @@ function CTCDashboard() {
     );
   }
 
-  return (
-    <View className="gap-6">
-      <TouchableOpacity onPress={() => setView('report_fault')}>
-        <DashboardCard title="Yeni Arıza" value="Arıza Bildir" color="bg-blue-100 text-blue-800" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={fetchHistory}>
-        <DashboardCard title="Raporlarım" value="Geçmişi Görüntüle" color={`${isDark ? 'bg-dark-card text-dark-primary' : 'bg-gray-100 text-gray-800'}`} />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={fetchAllFaults}>
-        <DashboardCard title="Tüm Arızalar" value="Aktif Arızaları Yönet" color="bg-red-100 text-red-800" />
-      </TouchableOpacity>
-      <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
-      <LoadingOverlay visible={loading} />
-    </View>
-  );
+  // Fallback (though view is constrained)
+  return null;
 }
 
 function AdminDashboard() {
@@ -477,8 +523,9 @@ function AdminDashboard() {
   const isDark = actualTheme === 'dark';
   const [faults, setFaults] = useState<any[]>([]);
   const [chiefdoms, setChiefdoms] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user'>('overview');
+  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user' | 'projects'>('overview');
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -522,8 +569,12 @@ function AdminDashboard() {
 
   // Chiefdom Form State
   const [newChiefdom, setNewChiefdom] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [editingChiefdomId, setEditingChiefdomId] = useState<string | null>(null);
   const [editChiefdomName, setEditChiefdomName] = useState('');
+
+  // Project Form State
+  const [newProjectName, setNewProjectName] = useState('');
 
   // Closure Form State (Copied from WorkerDashboard)
   const [closingFaultId, setClosingFaultId] = useState<string | null>(null);
@@ -569,15 +620,17 @@ function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [faultsData, chiefdomsData, usersData] = await Promise.all([
+      const [faultsData, chiefdomsData, usersData, projectsData] = await Promise.all([
         api.get('/faults'),
         api.get('/chiefdoms'),
-        api.get('/users')
+        api.get('/users'),
+        api.get('/projects')
       ]);
       // Filter for active faults only
       setFaults(faultsData.filter((f: any) => f.status === 'open'));
       setChiefdoms(chiefdomsData);
       setUsers(usersData);
+      setProjects(projectsData);
       setError(null);
     } catch (error: any) {
       console.error(error);
@@ -702,6 +755,21 @@ function AdminDashboard() {
     }
   };
 
+  const handleCreateProject = async () => {
+    if (!newProjectName) return;
+    setLoading(true);
+    try {
+      await api.post('/projects', { name: newProjectName });
+      showAlert('Başarılı', 'Proje oluşturuldu', 'success');
+      setNewProjectName('');
+      fetchData();
+    } catch (error) {
+      showAlert('Hata', 'Proje oluşturulamadı', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleUpdateUser = async () => {
     if (!editUserForm.username || !editUserForm.fullName || !editUserForm.email || !editUserForm.phone) {
@@ -778,9 +846,13 @@ function AdminDashboard() {
   const handleCreateChiefdom = async () => {
     setLoading(true);
     try {
-      await api.post('/chiefdoms', { name: newChiefdom });
+      await api.post('/chiefdoms', {
+        name: newChiefdom,
+        projectId: selectedProjectId || undefined
+      });
       showAlert('Başarılı', 'Şeflik oluşturuldu', 'success');
       setNewChiefdom('');
+      setSelectedProjectId('');
       fetchData();
     } catch (error) {
       showAlert('Hata', 'Şeflik oluşturulamadı', 'error');
@@ -946,6 +1018,54 @@ function AdminDashboard() {
       );
     }
 
+    if (view === 'projects') {
+      return (
+        <View className="gap-4">
+          <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
+            <Text className="text-black font-bold">← Geri</Text>
+          </TouchableOpacity>
+          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Projeleri Yönet</Text>
+
+          <View className="flex-row gap-2 mb-4">
+            <TextInput placeholder="Yeni Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+            <TouchableOpacity onPress={handleCreateProject} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+          </View>
+
+          {projects.map(p => (
+            <View key={p.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
+              <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{p.name}</Text>
+              <Text className="text-gray-500 text-xs">{p.chiefdoms?.length || 0} Şeflik</Text>
+            </View>
+          ))}
+          <LoadingOverlay visible={loading} />
+        </View>
+      );
+    }
+
+    if (view === 'projects') {
+      return (
+        <View className="gap-4">
+          <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
+            <Text className="text-black font-bold">← Geri</Text>
+          </TouchableOpacity>
+          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Projeleri Yönet</Text>
+
+          <View className="flex-row gap-2 mb-4">
+            <TextInput placeholder="Yeni Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+            <TouchableOpacity onPress={handleCreateProject} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+          </View>
+
+          {projects.map(p => (
+            <View key={p.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
+              <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{p.name}</Text>
+              <Text className="text-gray-500 text-xs">{p.chiefdoms?.length || 0} Şeflik</Text>
+            </View>
+          ))}
+          <LoadingOverlay visible={loading} />
+        </View>
+      );
+    }
+
     if (view === 'chiefdoms') {
       return (
         <View className="gap-4">
@@ -954,9 +1074,22 @@ function AdminDashboard() {
           </TouchableOpacity>
           <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Şeflikleri Yönet</Text>
 
-          <View className="flex-row gap-2">
-            <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-            <TouchableOpacity onPress={handleCreateChiefdom} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+          <View className="flex-col gap-2 mb-4">
+            <View className="flex-row gap-2">
+              {projects.map(p => (
+                <TouchableOpacity
+                  key={p.id}
+                  onPress={() => setSelectedProjectId(p.id.toString())}
+                  className={`px-4 py-2 rounded-full border ${selectedProjectId === p.id.toString() ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'}`}
+                >
+                  <Text className={`${selectedProjectId === p.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{p.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View className="flex-row gap-2">
+              <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+              <TouchableOpacity onPress={handleCreateChiefdom} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+            </View>
           </View>
 
           {chiefdoms.map(c => (
@@ -975,7 +1108,9 @@ function AdminDashboard() {
                   </View>
                 ) : (
                   <View className="flex-1">
-                    <Text className={`font-bold text-lg mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{c.name}</Text>
+                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{c.name}</Text>
+                    {c.project && <Text className="text-xs font-bold text-orange-500 mb-2">{c.project.name}</Text>}
+                    {!c.project && <Text className="text-xs font-bold text-gray-400 mb-2">Projesiz</Text>}
 
                     <View className="pl-2 border-l-2 border-gray-200 mb-4">
                       <Text className="text-xs text-gray-500 font-bold mb-1">Atanan Çalışanlar:</Text>
@@ -1128,6 +1263,10 @@ function AdminDashboard() {
 
         <TouchableOpacity onPress={() => setView('faults')}>
           <DashboardCard title="Aktif Arızalar" value={faults.length.toString()} color="bg-red-100 text-red-800" />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setView('projects')}>
+          <DashboardCard title="Projeler" value={projects.length.toString()} color="bg-orange-100 text-orange-800" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => setView('chiefdoms')}>
@@ -1433,6 +1572,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { actualTheme } = useTheme();
   const isDark = actualTheme === 'dark';
+  const ref = useRef(null);
+  useScrollToTop(ref);
 
   const renderContent = () => {
     switch (user?.role) {
@@ -1448,7 +1589,7 @@ export default function Dashboard() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-      <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'}`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
+      <ScrollView ref={ref} className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'}`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
         <View className="px-4 py-6">
           {renderContent()}
         </View>

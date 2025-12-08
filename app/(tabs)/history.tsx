@@ -1,6 +1,6 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
 import LoadingOverlay from '../../components/LoadingOverlay';
@@ -12,6 +12,8 @@ export default function HistoryScreen() {
     const { user } = useAuth();
     const { actualTheme } = useTheme();
     const isDark = actualTheme === 'dark';
+    const ref = useRef(null);
+    useScrollToTop(ref);
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -673,6 +675,7 @@ export default function HistoryScreen() {
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
             <ScrollView
+                ref={ref}
                 className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 showsHorizontalScrollIndicator={false}

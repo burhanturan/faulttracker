@@ -1,5 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useScrollToTop } from '@react-navigation/native';
+import React, { useRef, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,6 +10,8 @@ export default function ProfileScreen() {
     const { user, signOut } = useAuth();
     const { theme, actualTheme, setTheme } = useTheme();
     const isDark = actualTheme === 'dark';
+    const ref = useRef(null);
+    useScrollToTop(ref);
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,7 +44,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-gray-50'}`} contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView ref={ref} className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-gray-50'}`} contentContainerStyle={{ flexGrow: 1 }}>
             <View className={`flex-1 p-6 items-center`}>
                 {/* Profile Icon */}
                 <View className={`${isDark ? 'bg-gray-700' : 'bg-gray-200'} p-6 rounded-full mb-4 shadow-lg`}>
