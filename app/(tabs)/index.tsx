@@ -593,6 +593,7 @@ function AdminDashboard() {
   // Toggles & Edit States
   const [showCreateRegion, setShowCreateRegion] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showCreateChiefdom, setShowCreateChiefdom] = useState(false); // New toggle state
   const [editRegionModalVisible, setEditRegionModalVisible] = useState(false);
   const [selectedRegionForEdit, setSelectedRegionForEdit] = useState<any>(null);
   const [editProjectModalVisible, setEditProjectModalVisible] = useState(false);
@@ -1204,70 +1205,138 @@ function AdminDashboard() {
 
 
     if (view === 'chiefdoms') {
+      // Helper to render chiefdom list
+      const renderChiefdomList = (list: any[]) => (
+        list.map(c => (
+          <View key={c.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2 ml-2`}>
+            <View className="flex-row justify-between items-center mb-2">
+              <View className="flex-1">
+                <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{c.name}</Text>
+
+                <View className="pl-2 border-l-2 border-gray-200 mb-4 mt-2">
+                  <Text className="text-xs text-gray-500 font-bold mb-1">Atanan Çalışanlar:</Text>
+                  {users.filter(u => u.chiefdom?.id == c.id).length > 0 ? (
+                    <View className="gap-1">
+                      {users.filter(u => u.chiefdom?.id == c.id).map(u => (
+                        <Text key={u.id} className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm`}>• {u.fullName} <Text className="text-gray-400 text-xs">({u.role})</Text></Text>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text className="text-gray-400 text-xs italic">Çalışan atanmadı</Text>
+                  )}
+                </View>
+
+                <View className="flex-row gap-3">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedChiefdomForEdit(c);
+                      setEditChiefdomModalVisible(true);
+                    }}
+                    className="flex-1 bg-blue-100 py-2 rounded-lg items-center justify-center"
+                  >
+                    <Text className="text-tcdd-navy font-bold">Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} className="flex-1 bg-red-100 py-2 rounded-lg items-center justify-center">
+                    <Text className="text-red-600 font-bold">Sil</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        ))
+      );
+
       return (
         <View className="gap-4">
           <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
             <Text className="text-black font-bold">← Geri</Text>
           </TouchableOpacity>
-          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Şeflikleri Yönet</Text>
+
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Şeflikleri Yönet</Text>
+            <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} className="bg-green-600 px-4 py-2 rounded-lg">
+              <Text className="text-white font-bold">{showCreateChiefdom ? 'Kapat' : '+ Şeflik Ekle'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {showCreateChiefdom && (
+            <View className="gap-2 mb-6 border p-4 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
+              <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Şeflik Oluştur</Text>
+              <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Projeyi Seçin:</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {projects.map(p => (
+                  <TouchableOpacity key={p.id} onPress={() => setSelectedProjectId(p.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedProjectId === p.id.toString() ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                    <Text className={selectedProjectId === p.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{p.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <View className="flex-row gap-2 mt-2">
+                <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                <TouchableOpacity onPress={handleCreateChiefdom} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+              </View>
+            </View>
+          )}
 
           <View className="flex-col gap-2 mb-4">
-            <View className="flex-row gap-2">
+            <Text className={`font-bold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Filtrele:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <TouchableOpacity
+                onPress={() => setSelectedProjectId('')}
+                className={`px-4 py-2 mr-2 rounded-full border ${selectedProjectId === '' ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'}`}
+              >
+                <Text className={`${selectedProjectId === '' ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} font-bold`}>Tüm Şeflikler</Text>
+              </TouchableOpacity>
               {projects.map(p => (
                 <TouchableOpacity
                   key={p.id}
                   onPress={() => setSelectedProjectId(p.id.toString())}
-                  className={`px-4 py-2 rounded-full border ${selectedProjectId === p.id.toString() ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'}`}
+                  className={`px-4 py-2 mr-2 rounded-full border ${selectedProjectId === p.id.toString() ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'}`}
                 >
-                  <Text className={`${selectedProjectId === p.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{p.name}</Text>
+                  <Text className={`${selectedProjectId === p.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} font-bold`}>{p.name}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
-            <View className="flex-row gap-2">
-              <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-              <TouchableOpacity onPress={handleCreateChiefdom} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
 
-          {chiefdoms.map(c => (
-            <View key={c.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
-              <View className="flex-row justify-between items-center mb-2">
-                <View className="flex-1">
-                  <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{c.name}</Text>
-                  {c.project && <Text className="text-xs font-bold text-orange-500 mb-2">{c.project.name}</Text>}
-                  {!c.project && <Text className="text-xs font-bold text-gray-400 mb-2">Projesiz</Text>}
-
-                  <View className="pl-2 border-l-2 border-gray-200 mb-4">
-                    <Text className="text-xs text-gray-500 font-bold mb-1">Atanan Çalışanlar:</Text>
-                    {users.filter(u => u.chiefdom?.id == c.id).length > 0 ? (
-                      <View className="gap-1">
-                        {users.filter(u => u.chiefdom?.id == c.id).map(u => (
-                          <Text key={u.id} className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm`}>• {u.fullName} <Text className="text-gray-400 text-xs">({u.role})</Text></Text>
-                        ))}
-                      </View>
-                    ) : (
-                      <Text className="text-gray-400 text-xs italic">Çalışan atanmadı</Text>
-                    )}
-                  </View>
-
-                  <View className="flex-row gap-3">
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedChiefdomForEdit(c);
-                        setEditChiefdomModalVisible(true);
-                      }}
-                      className="flex-1 bg-blue-100 py-2 rounded-lg items-center justify-center"
-                    >
-                      <Text className="text-tcdd-navy font-bold">Düzenle</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} className="flex-1 bg-red-100 py-2 rounded-lg items-center justify-center">
-                      <Text className="text-red-600 font-bold">Sil</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
+          {/* List Rendering Logic */}
+          {selectedProjectId ? (
+            // Single Project View
+            <View>
+              <Text className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                {projects.find(p => p.id.toString() === selectedProjectId)?.name || 'Proje'} Şeflikleri
+              </Text>
+              {renderChiefdomList(chiefdoms.filter(c => c.projectId?.toString() === selectedProjectId))}
+              {chiefdoms.filter(c => c.projectId?.toString() === selectedProjectId).length === 0 && (
+                <Text className="text-gray-500 italic">Bu projeye ait şeflik bulunamadı.</Text>
+              )}
             </View>
-          ))}
+          ) : (
+            // All Projects Grouped View
+            <View className="gap-6">
+              {projects.map(p => {
+                const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
+                if (projectChiefdoms.length === 0) return null;
+                return (
+                  <View key={p.id}>
+                    <View className={`p-2 rounded mb-2 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                      <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{p.name}</Text>
+                    </View>
+                    {renderChiefdomList(projectChiefdoms)}
+                  </View>
+                );
+              })}
+              {/* Unassigned Chiefdoms */}
+              {chiefdoms.filter(c => !c.projectId).length > 0 && (
+                <View>
+                  <View className={`p-2 rounded mb-2 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                    <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Atanmamış Şeflikler</Text>
+                  </View>
+                  {renderChiefdomList(chiefdoms.filter(c => !c.projectId))}
+                </View>
+              )}
+            </View>
+          )}
+
           <LoadingOverlay visible={loading} />
           {editChiefdomModalVisible && (
             <EditChiefdomModal
