@@ -284,6 +284,9 @@ app.get('/api/regions', async (req, res) => {
 
 app.post('/api/regions', async (req, res) => {
     const { name, description } = req.body;
+    if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Bölge adı zorunludur' });
+    }
     try {
         const region = await prisma.region.create({ data: { name, description } });
         res.json(region);
@@ -307,6 +310,9 @@ app.get('/api/projects', async (req, res) => {
 
 app.post('/api/projects', async (req, res) => {
     const { name, description, regionId } = req.body;
+    if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Proje adı zorunludur' });
+    }
     try {
         const project = await prisma.project.create({
             data: {
@@ -342,6 +348,9 @@ app.get('/api/chiefdoms', async (req, res) => {
 
 app.post('/api/chiefdoms', async (req, res) => {
     const { name, projectId, startKm, endKm } = req.body;
+    if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Şeflik adı zorunludur' });
+    }
     try {
         const chiefdom = await prisma.chiefdom.create({
             data: {

@@ -815,7 +815,10 @@ function AdminDashboard() {
   };
 
   const handleCreateProject = async () => {
-    if (!newProjectName) return;
+    if (!newProjectName || !newProjectName.trim()) {
+      showAlert('Hata', 'Proje adı boş olamaz', 'error');
+      return;
+    }
     setLoading(true);
     try {
       await api.post('/projects', {
@@ -835,7 +838,10 @@ function AdminDashboard() {
   };
 
   const handleCreateRegion = async () => {
-    if (!newRegionName) return;
+    if (!newRegionName || !newRegionName.trim()) {
+      showAlert('Hata', 'Bölge adı boş olamaz', 'error');
+      return;
+    }
     setLoading(true);
     try {
       await api.post('/regions', { name: newRegionName, description: newRegionDesc });
@@ -954,6 +960,10 @@ function AdminDashboard() {
   };
 
   const handleCreateChiefdom = async () => {
+    if (!newChiefdom || !newChiefdom.trim()) {
+      showAlert('Hata', 'Şeflik adı boş olamaz', 'error');
+      return;
+    }
     setLoading(true);
     try {
       await api.post('/chiefdoms', {
@@ -1003,6 +1013,48 @@ function AdminDashboard() {
   };
 
   const renderContent = () => {
+    if (view === 'overview') {
+
+      return (
+        <View className="gap-4">
+          <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Genel Bakış</Text>
+
+          <View className="flex-row flex-wrap justify-between gap-4">
+            <TouchableOpacity onPress={() => setView('faults')} className="w-[47%]">
+              <DashboardCard title="Aktif Arızalar" value={faults.length.toString()} color="bg-red-100 text-red-800" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setView('users')} className="w-[47%]">
+              <DashboardCard title="Kullanıcılar" value={users.length.toString()} color="bg-blue-100 text-blue-800" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setView('regions')} className="w-[47%]">
+              <DashboardCard title="Bölgeler" value={regions.length.toString()} color="bg-purple-100 text-purple-800" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setView('projects')} className="w-[47%]">
+              <DashboardCard title="Projeler" value={projects.length.toString()} color="bg-orange-100 text-orange-800" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setView('chiefdoms')} className="w-[47%]">
+              <DashboardCard title="Şeflikler" value={chiefdoms.length.toString()} color="bg-green-100 text-green-800" />
+            </TouchableOpacity>
+          </View>
+
+          <Text className={`text-xl font-bold mt-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Son Eklenen Arızalar</Text>
+          {faults.slice(0, 3).map(f => (
+            <View key={f.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
+              <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{f.title}</Text>
+              <Text className="text-gray-500 text-xs">{f.description}</Text>
+              <View className={`self-start px-2 py-1 rounded-full mt-2 ${f.status === 'open' ? 'bg-red-100' : 'bg-green-100'}`}>
+                <Text className={`text-xs font-bold ${f.status === 'open' ? 'text-red-800' : 'text-green-800'}`}>{f.status.toUpperCase()}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      );
+    }
+
     if (view === 'users') {
       return (
         <View className="gap-4">
