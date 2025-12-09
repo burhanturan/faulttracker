@@ -956,10 +956,17 @@ function AdminDashboard() {
 
 
   // Filter roles based on current user's role
-  const availableRoles = ['admin', 'engineer', 'ctc', 'ctc_watchman', 'worker'].filter(role => {
+  const availableRoles = ['admin', 'engineer', 'ctc_watchman', 'worker'].filter(role => {
     if (user?.role !== 'admin' && role === 'admin') return false;
     return true;
   });
+
+  const roleLabels: { [key: string]: string } = {
+    admin: 'Yönetici',
+    engineer: 'Mühendis',
+    ctc_watchman: 'CTC Nöbetçisi',
+    worker: 'Saha Çalışanı'
+  };
 
   const renderContent = () => {
     if (view === 'users') {
@@ -989,7 +996,7 @@ function AdminDashboard() {
                   <View className="flex-row gap-2 flex-wrap mb-2">
                     {availableRoles.map(r => (
                       <TouchableOpacity key={r} onPress={() => setEditUserForm({ ...editUserForm, role: r, chiefdomId: '' })} className={`px-2 py-1 rounded-full border ${editUserForm.role === r ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
-                        <Text className={`text-xs ${editUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}`}>{r}</Text>
+                        <Text className={`text-xs ${editUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}`}>{roleLabels[r] || r}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -1057,7 +1064,7 @@ function AdminDashboard() {
             <View className="flex-row gap-2 flex-wrap mb-2">
               {availableRoles.map(r => (
                 <TouchableOpacity key={r} onPress={() => setCreateUserForm({ ...createUserForm, role: r, chiefdomId: '' })} className={`px-3 py-1 rounded-full border ${createUserForm.role === r ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
-                  <Text className={createUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{r}</Text>
+                  <Text className={createUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{roleLabels[r] || r}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1065,12 +1072,35 @@ function AdminDashboard() {
             {createUserForm.role === 'worker' && (
               <>
                 <Text className={`font-bold mt-2 mb-1 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Şeflik Ata</Text>
-                <View className="flex-row gap-2 flex-wrap mb-2">
-                  {chiefdoms.map(c => (
-                    <TouchableOpacity key={c.id} onPress={() => setCreateUserForm({ ...createUserForm, chiefdomId: c.id.toString() })} className={`px-3 py-1 rounded-full border ${createUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
-                      <Text className={createUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{c.name}</Text>
-                    </TouchableOpacity>
-                  ))}
+                <View className="mb-2">
+                  {projects.map(p => {
+                    const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
+                    if (projectChiefdoms.length === 0) return null;
+                    return (
+                      <View key={p.id} className="mb-3">
+                        <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{p.name}</Text>
+                        <View className="flex-row gap-2 flex-wrap">
+                          {projectChiefdoms.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                            <TouchableOpacity key={c.id} onPress={() => setCreateUserForm({ ...createUserForm, chiefdomId: c.id.toString() })} className={`px-3 py-1 rounded-full border ${createUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
+                              <Text className={createUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{c.name}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                    );
+                  })}
+                  {chiefdoms.filter(c => !c.projectId).length > 0 && (
+                    <View className="mb-3">
+                      <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Diğer</Text>
+                      <View className="flex-row gap-2 flex-wrap">
+                        {chiefdoms.filter(c => !c.projectId).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                          <TouchableOpacity key={c.id} onPress={() => setCreateUserForm({ ...createUserForm, chiefdomId: c.id.toString() })} className={`px-3 py-1 rounded-full border ${createUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')}`}>
+                            <Text className={createUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')}>{c.name}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
                 </View>
               </>
             )}
