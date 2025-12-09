@@ -1,6 +1,7 @@
 import { useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
+import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
@@ -8,9 +9,15 @@ import EditChiefdomModal from '../../components/EditChiefdomModal';
 import EditProjectModal from '../../components/EditProjectModal';
 import EditRegionModal from '../../components/EditRegionModal';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { ActivityItem } from '../../components/RailGuard/ActivityItem';
+import { RailGuardHeader } from '../../components/RailGuard/Header';
+import { QuickAction } from '../../components/RailGuard/QuickAction';
+import { StatCard } from '../../components/RailGuard/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../lib/api';
+// import { QuickAction } ... removing as we deleted the file for now, but Header exists.
+
 
 // --- Components ---
 
@@ -76,10 +83,14 @@ function CTCDashboard() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
 
+
+
   // Default to list view ('all_faults')
   const [view, setView] = useState<'all_faults' | 'history' | 'report_fault'>('all_faults');
   const [allFaults, setAllFaults] = useState<any[]>([]);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+
+
 
   // Custom Alert State
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
@@ -568,6 +579,25 @@ function AdminDashboard() {
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredFaults, setFilteredFaults] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredFaults([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const results = faults.filter(f =>
+      f.title.toLowerCase().includes(query) ||
+      f.description?.toLowerCase().includes(query) ||
+      f.id.toString().includes(query) ||
+      f.status.toLowerCase().includes(query)
+    );
+    setFilteredFaults(results);
+  }, [searchQuery, faults]);
+
   // Custom Alert State
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
     visible: false, title: '', message: '', type: 'info'
@@ -1015,42 +1045,128 @@ function AdminDashboard() {
   const renderContent = () => {
     if (view === 'overview') {
 
-      return (
-        <View className="gap-4">
-          <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Genel Bakış</Text>
-
-          <View className="flex-row flex-wrap justify-between gap-4">
-            <TouchableOpacity onPress={() => setView('faults')} className="w-[47%]">
-              <DashboardCard title="Aktif Arızalar" value={faults.length.toString()} color="bg-red-100 text-red-800" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setView('users')} className="w-[47%]">
-              <DashboardCard title="Kullanıcılar" value={users.length.toString()} color="bg-blue-100 text-blue-800" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setView('regions')} className="w-[47%]">
-              <DashboardCard title="Bölgeler" value={regions.length.toString()} color="bg-purple-100 text-purple-800" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setView('projects')} className="w-[47%]">
-              <DashboardCard title="Projeler" value={projects.length.toString()} color="bg-orange-100 text-orange-800" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setView('chiefdoms')} className="w-[47%]">
-              <DashboardCard title="Şeflikler" value={chiefdoms.length.toString()} color="bg-green-100 text-green-800" />
-            </TouchableOpacity>
+      // If searching, show results list instead of Dashboard
+      if (searchQuery.trim()) {
+        return (
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+            <RailGuardHeader user={user} onSearch={setSearchQuery} />
+            <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
+              <Text className="text-white text-lg font-bold mb-4">Arama Sonuçları ({filteredFaults.length})</Text>
+              {filteredFaults.map(f => (
+                <TouchableOpacity key={f.id} onPress={() => { /* Handle detail view later */ }} className="bg-white/10 p-4 rounded-xl mb-3 border border-white/5">
+                  <View className="flex-row justify-between">
+                    <Text className="text-white font-bold text-base">{f.title}</Text>
+                    <View className={`px-2 py-1 rounded-lg ${f.status === 'open' ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
+                      <Text className={`${f.status === 'open' ? 'text-red-400' : 'text-green-400'} text-xs font-bold uppercase`}>{f.status}</Text>
+                    </View>
+                  </View>
+                  <Text className="text-gray-400 text-sm mt-1">{f.description}</Text>
+                  <Text className="text-gray-500 text-xs mt-2">ID: {f.id} • {new Date(f.createdAt).toLocaleDateString()}</Text>
+                </TouchableOpacity>
+              ))}
+              {filteredFaults.length === 0 && (
+                <Text className="text-gray-500 text-center mt-10">Sonuç bulunamadı.</Text>
+              )}
+            </ScrollView>
           </View>
+        );
+      }
 
-          <Text className={`text-xl font-bold mt-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Son Eklenen Arızalar</Text>
-          {faults.slice(0, 3).map(f => (
-            <View key={f.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
-              <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{f.title}</Text>
-              <Text className="text-gray-500 text-xs">{f.description}</Text>
-              <View className={`self-start px-2 py-1 rounded-full mt-2 ${f.status === 'open' ? 'bg-red-100' : 'bg-green-100'}`}>
-                <Text className={`text-xs font-bold ${f.status === 'open' ? 'text-red-800' : 'text-green-800'}`}>{f.status.toUpperCase()}</Text>
+      return (
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <RailGuardHeader user={user} onSearch={setSearchQuery} />
+          <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+            {/* KPI Grid */}
+            {/* Row 1: Açık Arızalar - Full Width */}
+            <View className="mb-2">
+              <TouchableOpacity className="w-full" disabled>
+                <View
+                  style={{ backgroundColor: '#EFF3F8' }}
+                  className="rounded-2xl p-4 border border-gray-200 h-[150px] justify-between relative overflow-hidden shadow-sm"
+                >
+                  <View style={{ backgroundColor: '#EF4444', opacity: 0.05 }} className="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl" />
+                  <View className="flex-row justify-between items-start">
+                    <View className="p-2.5 rounded-xl bg-white/80 border border-gray-200">
+                      <AlertTriangle size={22} color="#EF4444" />
+                    </View>
+                  </View>
+                  <View>
+                    <Text className="text-3xl font-bold text-gray-900 tracking-tight">{faults.filter(f => f.status === 'open').length}</Text>
+                    <Text className="text-gray-600 text-sm font-medium mt-1">Açık Arızalar</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Acil Müdahale</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Row 2: Çözülenler + İşlemde */}
+            <View className="flex-row gap-2 mb-6">
+              <StatCard
+                title="Çözülenler"
+                value={faults.filter(f => f.status === 'closed').length}
+                icon={CheckCircle2}
+                color="#10B981"
+                subtitle="Toplam Başarı"
+              />
+              <StatCard
+                title="İşlemde"
+                value={faults.filter(f => f.status === 'in_progress').length}
+                icon={Clock}
+                color="#F59E0B"
+                subtitle="Devam Eden"
+              />
+            </View>
+
+            {/* Quick Navigation / Legacy Cards */}
+            <Text className="text-gray-900 text-xl font-bold mb-4">Hızlı Erişim</Text>
+            <View className="flex-row flex-wrap justify-between gap-4">
+              <View className="w-[47%]">
+                <QuickAction title="Bölgeler" value={regions.length.toString()} color="purple" onPress={() => setView('regions')} />
+              </View>
+              <View className="w-[47%]">
+                <QuickAction title="Projeler" value={projects.length.toString()} color="orange" onPress={() => setView('projects')} />
+              </View>
+              <View className="w-[47%] mt-1">
+                <QuickAction title="Şeflikler" value={chiefdoms.length.toString()} color="green" onPress={() => setView('chiefdoms')} />
+              </View>
+              <View className="w-[47%] mt-1">
+                <QuickAction
+                  title="Aktif Personel"
+                  value={users.filter(u => u.role === 'worker' || u.role === 'maintenance').length.toString()}
+                  color="blue"
+                  onPress={() => setView('users')}
+                />
               </View>
             </View>
-          ))}
+
+            {/* Recent Activity */}
+            <Text className="text-white text-xl font-bold mb-4 mt-8">Son Aktiviteler</Text>
+            <View className="mb-20">
+              {/* Mock Data for now as per design ref */}
+              <ActivityItem
+                user="Worker #12"
+                action="arıza TRK-402 tamamlandı"
+                time="5 dk önce"
+                icon={CheckCircle2}
+                iconColor="text-green-600"
+              />
+              <ActivityItem
+                user="CTC Watchman"
+                action="arıza SIG-445 oluşturuldu"
+                time="12 dk önce"
+                icon={AlertTriangle}
+                iconColor="text-red-600"
+              />
+              <ActivityItem
+                user="Worker #08"
+                action="ELEC-220 üzerinde çalışma başladı"
+                time="25 dk önce"
+                icon={Clock}
+                iconColor="text-yellow-600"
+              />
+            </View>
+          </ScrollView>
+
         </View>
       );
     }

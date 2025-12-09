@@ -249,9 +249,7 @@ export default function TabLayout() {
         options={{
           title: 'Ana Sayfa',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
-          headerShown: true,
-          headerRight: () => <HeaderProfileButton />,
-          headerTitleAlign: 'center',
+          headerShown: false,
         }}
       />
       <Tabs.Screen
