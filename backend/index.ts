@@ -558,6 +558,20 @@ app.put('/api/regions/:id', async (req, res) => {
     }
 });
 
+// Delete Region
+app.delete('/api/regions/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.region.delete({
+            where: { id: parseInt(id) },
+        });
+        res.json({ message: 'Region deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting region:', error);
+        res.status(400).json({ error: 'Failed to delete region' });
+    }
+});
+
 // Update Project
 app.put('/api/projects/:id', async (req, res) => {
     const { id } = req.params;
@@ -574,6 +588,20 @@ app.put('/api/projects/:id', async (req, res) => {
         res.json(project);
     } catch (error) {
         res.status(400).json({ error: 'Failed to update project' });
+    }
+});
+
+// Delete Project
+app.delete('/api/projects/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.project.delete({
+            where: { id: parseInt(id) },
+        });
+        res.json({ message: 'Project deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        res.status(400).json({ error: 'Failed to delete project' });
     }
 });
 

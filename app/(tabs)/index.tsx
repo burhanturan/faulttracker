@@ -871,6 +871,36 @@ function AdminDashboard() {
     });
   };
 
+  const handleDeleteRegion = (id: string) => {
+    showAlert('Bölgeyi Sil', 'Bu bölgeyi silmek istediğinize emin misiniz?', 'confirm', async () => {
+      setLoading(true);
+      try {
+        await api.delete(`/regions/${id}`);
+        showAlert('Başarılı', 'Bölge silindi', 'success');
+        fetchData();
+      } catch (error) {
+        showAlert('Hata', 'Bölge silinemedi (Bağlı projeler olabilir)', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+  };
+
+  const handleDeleteProject = (id: string) => {
+    showAlert('Projeyi Sil', 'Bu projeyi silmek istediğinize emin misiniz?', 'confirm', async () => {
+      setLoading(true);
+      try {
+        await api.delete(`/projects/${id}`);
+        showAlert('Başarılı', 'Proje silindi', 'success');
+        fetchData();
+      } catch (error) {
+        showAlert('Hata', 'Proje silinemedi (Bağlı şeflikler olabilir)', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+  };
+
   const startEditing = (user: any) => {
     setEditingUserId(user.id.toString());
     setEditUserForm({
@@ -1106,15 +1136,23 @@ function AdminDashboard() {
                     ) : <Text className="text-xs text-gray-400 italic">Şeflik yok</Text>}
                   </View>
                 </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedProjectForEdit(p);
-                    setEditProjectModalVisible(true);
-                  }}
-                  className="bg-blue-100 px-3 py-1 rounded ml-2"
-                >
-                  <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
-                </TouchableOpacity>
+                <View className="ml-2 gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedProjectForEdit(p);
+                      setEditProjectModalVisible(true);
+                    }}
+                    className="bg-blue-100 px-3 py-1 rounded w-20 items-center"
+                  >
+                    <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteProject(p.id)}
+                    className="bg-red-100 px-3 py-1 rounded w-20 items-center"
+                  >
+                    <Text className="text-red-600 text-xs font-bold">Sil</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -1174,15 +1212,23 @@ function AdminDashboard() {
                     ) : <Text className="text-xs text-gray-400 italic">Proje yok</Text>}
                   </View>
                 </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedRegionForEdit(r);
-                    setEditRegionModalVisible(true);
-                  }}
-                  className="bg-blue-100 px-3 py-1 rounded ml-2"
-                >
-                  <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
-                </TouchableOpacity>
+                <View className="ml-2 gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedRegionForEdit(r);
+                      setEditRegionModalVisible(true);
+                    }}
+                    className="bg-blue-100 px-3 py-1 rounded w-20 items-center"
+                  >
+                    <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteRegion(r.id)}
+                    className="bg-red-100 px-3 py-1 rounded w-20 items-center"
+                  >
+                    <Text className="text-red-600 text-xs font-bold">Sil</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -1260,12 +1306,12 @@ function AdminDashboard() {
           </View>
 
           {showCreateChiefdom && (
-            <View className="gap-2 mb-6 border p-4 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
+            <View className={`gap-2 mb-6 border p-4 rounded-xl ${isDark ? 'bg-dark-card border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
               <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Şeflik Oluştur</Text>
               <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Projeyi Seçin:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {projects.map(p => (
-                  <TouchableOpacity key={p.id} onPress={() => setSelectedProjectId(p.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedProjectId === p.id.toString() ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                  <TouchableOpacity key={p.id} onPress={() => setSelectedProjectId(p.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedProjectId === p.id.toString() ? 'bg-blue-500 border-blue-500' : (isDark ? 'border-gray-600' : 'border-gray-300')}`}>
                     <Text className={selectedProjectId === p.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{p.name}</Text>
                   </TouchableOpacity>
                 ))}
