@@ -5,6 +5,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
 import EditChiefdomModal from '../../components/EditChiefdomModal';
+import EditProjectModal from '../../components/EditProjectModal';
+import EditRegionModal from '../../components/EditRegionModal';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -588,6 +590,14 @@ function AdminDashboard() {
   const [newProjectDesc, setNewProjectDesc] = useState('');
   const [selectedRegionIdForProject, setSelectedRegionIdForProject] = useState('');
 
+  // Toggles & Edit States
+  const [showCreateRegion, setShowCreateRegion] = useState(false);
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [editRegionModalVisible, setEditRegionModalVisible] = useState(false);
+  const [selectedRegionForEdit, setSelectedRegionForEdit] = useState<any>(null);
+  const [editProjectModalVisible, setEditProjectModalVisible] = useState(false);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] = useState<any>(null);
+
   // Closure Form State (Copied from WorkerDashboard)
   const [closingFaultId, setClosingFaultId] = useState<string | null>(null);
   const [closureForm, setClosureForm] = useState({
@@ -1047,38 +1057,79 @@ function AdminDashboard() {
           <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
             <Text className="text-black font-bold">← Geri</Text>
           </TouchableOpacity>
-          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Projeleri Yönet</Text>
-
-          <View className="mb-4 gap-2">
-            <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Bölgeyi Seçin:</Text>
-            <ScrollView horizontal>
-              {regions.map(r => (
-                <TouchableOpacity key={r.id} onPress={() => setSelectedRegionIdForProject(r.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedRegionIdForProject === r.id.toString() ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-                  <Text className={selectedRegionIdForProject === r.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{r.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <View className="flex-row gap-2 mt-2">
-              <View className="flex-1 gap-2">
-                <TextInput placeholder="Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                <TextInput placeholder="Açıklama (Opsiyonel)" value={newProjectDesc} onChangeText={setNewProjectDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-              </View>
-              <TouchableOpacity onPress={handleCreateProject} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-2 rounded justify-center items-center w-20`}>
-                <Text className="text-black font-bold">Ekle</Text>
-              </TouchableOpacity>
-            </View>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Projeleri Yönet</Text>
+            <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} className="bg-green-600 px-4 py-2 rounded-lg">
+              <Text className="text-white font-bold">{showCreateProject ? 'Kapat' : '+ Proje Ekle'}</Text>
+            </TouchableOpacity>
           </View>
+
+          {showCreateProject && (
+            <View className="mb-4 gap-2 border p-3 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
+              <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Proje Oluştur</Text>
+              <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Bölgeyi Seçin:</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {regions.map(r => (
+                  <TouchableOpacity key={r.id} onPress={() => setSelectedRegionIdForProject(r.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedRegionIdForProject === r.id.toString() ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                    <Text className={selectedRegionIdForProject === r.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{r.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <View className="flex-row gap-2 mt-2">
+                <View className="flex-1 gap-2">
+                  <TextInput placeholder="Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  <TextInput placeholder="Açıklama (Opsiyonel)" value={newProjectDesc} onChangeText={setNewProjectDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                </View>
+                <TouchableOpacity onPress={handleCreateProject} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-2 rounded justify-center items-center w-20`}>
+                  <Text className="text-black font-bold">Ekle</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
           {projects.map(p => (
             <View key={p.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
-              <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{p.name}</Text>
-              {p.region && <Text className="text-blue-500 text-xs">{p.region.name}</Text>}
-              {p.description && <Text className="text-gray-500 text-xs italic">{p.description}</Text>}
-              <Text className="text-gray-500 text-xs mt-1">{p.chiefdoms?.length || 0} Şeflik</Text>
+              <View className="flex-row justify-between items-start">
+                <View className="flex-1">
+                  <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{p.name}</Text>
+                  {p.region && <Text className="text-blue-500 text-xs">{p.region.name}</Text>}
+                  {p.description && <Text className="text-gray-500 text-xs italic">{p.description}</Text>}
+
+                  <View className="mt-2 pl-2 border-l-2 border-gray-200">
+                    <Text className="text-xs font-bold text-gray-500 mb-1">Şeflikler:</Text>
+                    {p.chiefdoms && p.chiefdoms.length > 0 ? (
+                      p.chiefdoms.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((c: any) => (
+                        <Text key={c.id} className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>• {c.name}</Text>
+                      ))
+                    ) : <Text className="text-xs text-gray-400 italic">Şeflik yok</Text>}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedProjectForEdit(p);
+                    setEditProjectModalVisible(true);
+                  }}
+                  className="bg-blue-100 px-3 py-1 rounded ml-2"
+                >
+                  <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
           <LoadingOverlay visible={loading} />
+          {editProjectModalVisible && (
+            <EditProjectModal
+              visible={editProjectModalVisible}
+              onClose={() => setEditProjectModalVisible(false)}
+              project={selectedProjectForEdit}
+              regions={regions}
+              onUpdate={() => {
+                fetchData();
+                setEditProjectModalVisible(false);
+              }}
+            />
+          )}
         </View>
       );
     }
@@ -1089,24 +1140,63 @@ function AdminDashboard() {
           <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
             <Text className="text-black font-bold">← Geri</Text>
           </TouchableOpacity>
-          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Bölgeleri Yönet</Text>
-
-          <View className="flex-row gap-2 mb-4">
-            <View className="flex-1 gap-2">
-              <TextInput placeholder="Bölge Adı (Örn: 1. Bölge)" value={newRegionName} onChangeText={setNewRegionName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-              <TextInput placeholder="Açıklama (Opsiyonel)" value={newRegionDesc} onChangeText={setNewRegionDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-            </View>
-            <TouchableOpacity onPress={handleCreateRegion} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Bölgeleri Yönet</Text>
+            <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} className="bg-green-600 px-4 py-2 rounded-lg">
+              <Text className="text-white font-bold">{showCreateRegion ? 'Kapat' : '+ Bölge Ekle'}</Text>
+            </TouchableOpacity>
           </View>
+
+          {showCreateRegion && (
+            <View className="flex-row gap-2 mb-4 border p-3 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
+              <View className="flex-1 gap-2">
+                <TextInput placeholder="Bölge Adı (Örn: 1. Bölge)" value={newRegionName} onChangeText={setNewRegionName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                <TextInput placeholder="Açıklama (Opsiyonel)" value={newRegionDesc} onChangeText={setNewRegionDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+              </View>
+              <TouchableOpacity onPress={handleCreateRegion} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+            </View>
+          )}
 
           {regions.map(r => (
             <View key={r.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
-              <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{r.name}</Text>
-              {r.description && <Text className="text-gray-500 text-xs italic">{r.description}</Text>}
-              <Text className="text-gray-500 text-xs mt-1">{r.projects?.length || 0} Proje</Text>
+              <View className="flex-row justify-between items-start">
+                <View className="flex-1">
+                  <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{r.name}</Text>
+                  {r.description && <Text className="text-gray-500 text-xs italic">{r.description}</Text>}
+
+                  <View className="mt-2 pl-2 border-l-2 border-gray-200">
+                    <Text className="text-xs font-bold text-gray-500 mb-1">Projeler:</Text>
+                    {r.projects && r.projects.length > 0 ? (
+                      r.projects.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((p: any) => (
+                        <Text key={p.id} className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>• {p.name}</Text>
+                      ))
+                    ) : <Text className="text-xs text-gray-400 italic">Proje yok</Text>}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedRegionForEdit(r);
+                    setEditRegionModalVisible(true);
+                  }}
+                  className="bg-blue-100 px-3 py-1 rounded ml-2"
+                >
+                  <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
           <LoadingOverlay visible={loading} />
+          {editRegionModalVisible && (
+            <EditRegionModal
+              visible={editRegionModalVisible}
+              onClose={() => setEditRegionModalVisible(false)}
+              region={selectedRegionForEdit}
+              onUpdate={() => {
+                fetchData();
+                setEditRegionModalVisible(false);
+              }}
+            />
+          )}
         </View>
       );
     }

@@ -541,17 +541,39 @@ app.post('/api/chiefdoms', async (req, res) => {
 });
 
 // Update Chiefdom
-app.put('/api/chiefdoms/:id', async (req, res) => {
+// app.put('/api/chiefdoms/:id', async (req, res) => { ... }); // Duplicate removed
+
+// Update Region
+app.put('/api/regions/:id', async (req, res) => {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, description } = req.body;
     try {
-        const chiefdom = await prisma.chiefdom.update({
+        const region = await prisma.region.update({
             where: { id: parseInt(id) },
-            data: { name },
+            data: { name, description },
         });
-        res.json(chiefdom);
+        res.json(region);
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update chiefdom' });
+        res.status(400).json({ error: 'Failed to update region' });
+    }
+});
+
+// Update Project
+app.put('/api/projects/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, description, regionId } = req.body;
+    try {
+        const project = await prisma.project.update({
+            where: { id: parseInt(id) },
+            data: {
+                name,
+                description,
+                regionId: regionId ? parseInt(regionId) : undefined
+            },
+        });
+        res.json(project);
+    } catch (error) {
+        res.status(400).json({ error: 'Failed to update project' });
     }
 });
 
