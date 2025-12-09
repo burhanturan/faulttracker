@@ -72,6 +72,7 @@ function CTCDashboard() {
   const [faultTime, setFaultTime] = useState('');
   const [chiefdomId, setChiefdomId] = useState('');
   const [chiefdoms, setChiefdoms] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
 
@@ -124,7 +125,13 @@ function CTCDashboard() {
   });
 
   useEffect(() => {
-    api.get('/chiefdoms').then(setChiefdoms).catch(console.error);
+    Promise.all([
+      api.get('/chiefdoms'),
+      api.get('/projects')
+    ]).then(([chiefdomsData, projectsData]) => {
+      setChiefdoms(chiefdomsData);
+      setProjects(projectsData);
+    }).catch(console.error);
     fetchAllFaults(); // Fetch on mount
   }, []);
 
@@ -490,16 +497,43 @@ function CTCDashboard() {
           />
 
           <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Şefliğe Ata</Text>
-          <View className="flex-row flex-wrap gap-2 mb-6">
-            {chiefdoms.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                onPress={() => setChiefdomId(c.id.toString())}
-                className={`px-4 py-2 rounded-full border ${chiefdomId === c.id.toString() ? 'bg-red-600 border-red-600' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300'}`}
-              >
-                <Text className={`${chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{c.name}</Text>
-              </TouchableOpacity>
-            ))}
+          <View className="mb-6">
+            {projects.map(p => {
+              const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
+              if (projectChiefdoms.length === 0) return null;
+              return (
+                <View key={p.id} className="mb-3">
+                  <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{p.name}</Text>
+                  <View className="flex-row gap-2 flex-wrap">
+                    {projectChiefdoms.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                      <TouchableOpacity
+                        key={c.id}
+                        onPress={() => setChiefdomId(c.id.toString())}
+                        className={`px-4 py-2 rounded-full border ${chiefdomId === c.id.toString() ? 'bg-red-600 border-red-600' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300'}`}
+                      >
+                        <Text className={`${chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+            {chiefdoms.filter(c => !c.projectId).length > 0 && (
+              <View className="mb-3">
+                <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Diğer</Text>
+                <View className="flex-row gap-2 flex-wrap">
+                  {chiefdoms.filter(c => !c.projectId).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                    <TouchableOpacity
+                      key={c.id}
+                      onPress={() => setChiefdomId(c.id.toString())}
+                      className={`px-4 py-2 rounded-full border ${chiefdomId === c.id.toString() ? 'bg-red-600 border-red-600' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300'}`}
+                    >
+                      <Text className={`${chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{c.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
 
           <TouchableOpacity
