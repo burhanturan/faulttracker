@@ -2,7 +2,7 @@
 import { useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
-import { AlertTriangle, Building2, CheckCircle2, Clock, FolderOpen, MapPin, Users } from 'lucide-react-native';
+import { AlertTriangle, Briefcase, Building2, CheckCircle2, ChevronRight, Clock, Edit2, FolderOpen, Mail, MapPin, Phone, Plus, Trash2, Users } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
@@ -73,6 +73,12 @@ function CTCDashboard() {
   const { user } = useAuth();
   const { actualTheme } = useTheme();
   const isDark = actualTheme === 'dark';
+
+  // Theme colors for consistent dark mode styling
+  const pageBg = isDark ? '#0F172A' : '#FFFFFF';
+  const buttonBg = isDark ? '#22D3EE' : '#1c4ed8';
+  const buttonText = isDark ? '#0F172A' : '#FFFFFF';
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [reporterName, setReporterName] = useState('');
@@ -614,6 +620,14 @@ function AdminDashboard() {
   const { user } = useAuth(); // Get current user
   const { actualTheme } = useTheme();
   const isDark = actualTheme === 'dark';
+
+  // Theme colors for consistent dark mode styling
+  const pageBg = isDark ? '#0F172A' : '#FFFFFF';
+  const buttonBg = isDark ? '#22D3EE' : '#1c4ed8';
+  const buttonText = isDark ? '#0F172A' : '#FFFFFF';
+  const cardBg = isDark ? '#1E293B' : '#FFFFFF';
+  const borderColor = isDark ? '#334155' : '#E5E7EB';
+
   const [faults, setFaults] = useState<any[]>([]); // Only open faults
   const [allFaults, setAllFaults] = useState<any[]>([]); // All faults for activity feed
   const [masterFaultList, setMasterFaultList] = useState<any[]>([]); // GLOBAL LIST for search (Open + Closed)
@@ -1142,7 +1156,7 @@ function AdminDashboard() {
       }
 
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }}>
           <RailGuardHeader user={user} onSearch={setSearchQuery} />
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <ScrollView
@@ -1173,7 +1187,7 @@ function AdminDashboard() {
                   icon={CheckCircle2}
                   color="#10B981"
                   subtitle="Toplam Başarı"
-                  onPress={() => { setView('faults'); setFaultStatusFilter('closed'); }}
+                  onPress={() => navigation.navigate('history' as never)}
                 />
                 <StatCard
                   title="İşlemde"
@@ -1360,18 +1374,18 @@ function AdminDashboard() {
           : 'Tüm Arızalar';
 
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
           <RailGuardHeader user={user} title={statusTitle} />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => { setView('overview'); setFaultStatusFilter('all'); }} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+            <TouchableOpacity onPress={() => { setView('overview'); setFaultStatusFilter('all'); }} style={{ backgroundColor: buttonBg, alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: buttonText, fontWeight: 'bold' }}>← Geri</Text>
             </TouchableOpacity>
 
             {filteredByStatus.length === 0 ? (
               <Text className={`text-center py - 8 ${isDark ? 'text-gray-400' : 'text-gray-500'} `}>Arıza bulunamadı</Text>
             ) : (
               filteredByStatus.map(f => (
-                <View key={f.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border`}>
+                <View key={f.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 8, marginBottom: 12 }}>
                   <View className="flex-row justify-between items-start mb-2">
                     <View className="flex-1">
                       <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{f.title}</Text>
@@ -1405,9 +1419,9 @@ function AdminDashboard() {
                   {f.status === 'open' && (
                     <TouchableOpacity
                       onPress={() => openClosureForm(f)}
-                      style={{ marginTop: 12, backgroundColor: '#1c4ed8', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+                      style={{ marginTop: 12, backgroundColor: buttonBg, paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
                     >
-                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Kapat</Text>
+                      <Text style={{ color: buttonText, fontWeight: 'bold' }}>Kapat</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1421,78 +1435,97 @@ function AdminDashboard() {
     // Users View
     if (view === 'users') {
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-          <RailGuardHeader user={user} title="Kullanıcılar" />
-          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {/* Unified Button Row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
+          <RailGuardHeader user={user} title="Aktif Personel" />
+          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
+                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
+                </View>
+                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setView('create_user')} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>+ Kullanıcı Ekle</Text>
+              <TouchableOpacity onPress={() => setView('create_user')} style={{ backgroundColor: buttonBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: buttonBg, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
+                <Plus size={18} color={buttonText} />
+                <Text style={{ color: buttonText, fontWeight: 'bold' }}>Personel Ekle</Text>
               </TouchableOpacity>
             </View>
 
-            <Text className={`text-xl font-bold mt-4 ${isDark ? 'text-white' : 'text-gray-800'} `}>Mevcut Kullanıcılar</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>Personel Listesi</Text>
+              <View style={{ backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
+                <Text style={{ color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 'bold', fontSize: 12 }}>{users.length} Kişi</Text>
+              </View>
+            </View>
+
             {users.map(u => (
-              <View key={u.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
+              <View key={u.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 20, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
                 {editingUserId === u.id.toString() ? (
                   <View>
-                    <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-tcdd-navy'} `}>Düzenleniyor: {u.username}</Text>
-                    <TextInput placeholder="Kullanıcı Adı" value={editUserForm.username} onChangeText={t => setEditUserForm({ ...editUserForm, username: t })} className={`p - 2 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Ad Soyad" value={editUserForm.fullName} onChangeText={t => setEditUserForm({ ...editUserForm, fullName: t })} className={`p - 2 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="E-posta" value={editUserForm.email} onChangeText={t => setEditUserForm({ ...editUserForm, email: t })} className={`p - 2 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Telefon" value={editUserForm.phone} onChangeText={t => setEditUserForm({ ...editUserForm, phone: t })} className={`p - 2 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Yeni Şifre (değiştirmek istemiyorsanız boş bırakın)" value={editUserForm.password} onChangeText={t => setEditUserForm({ ...editUserForm, password: t })} className={`p - 2 rounded border mb-2 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-
-                    <Text className="font-bold mt-1 mb-1">Rol</Text>
-                    <View className="flex-row gap-2 flex-wrap mb-2">
-                      {availableRoles.map(r => (
-                        <TouchableOpacity key={r} onPress={() => setEditUserForm({ ...editUserForm, role: r, chiefdomId: '' })} className={`px-2 py-1 rounded-full border ${editUserForm.role === r ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')} `}>
-                          <Text className={`text-xs ${editUserForm.role === r ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')} `}>{roleLabels[r] || r}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-
-                    {editUserForm.role === 'worker' && (
-                      <>
-                        <Text className="font-bold mt-1 mb-1">Şeflik Ata</Text>
-                        <View className="flex-row gap-2 flex-wrap mb-2">
-                          {chiefdoms.map(c => (
-                            <TouchableOpacity key={c.id} onPress={() => setEditUserForm({ ...editUserForm, chiefdomId: c.id.toString() })} className={`px-2 py-1 rounded-full border ${editUserForm.chiefdomId === c.id.toString() ? (isDark ? 'bg-dark-primary border-dark-primary' : 'bg-light-primary border-light-primary') : (isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300')} `}>
-                              <Text className={`text-xs ${editUserForm.chiefdomId === c.id.toString() ? 'text-black font-bold' : (isDark ? 'text-gray-300' : 'text-gray-600')} `}>{c.name}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </>
-                    )}
+                    <Text className={`font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Düzenleniyor: {u.username}</Text>
+                    <TextInput placeholder="Kullanıcı Adı" value={editUserForm.username} onChangeText={t => setEditUserForm({ ...editUserForm, username: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                    <TextInput placeholder="Ad Soyad" value={editUserForm.fullName} onChangeText={t => setEditUserForm({ ...editUserForm, fullName: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                    <TextInput placeholder="E-posta" value={editUserForm.email} onChangeText={t => setEditUserForm({ ...editUserForm, email: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                    <TextInput placeholder="Telefon" value={editUserForm.phone} onChangeText={t => setEditUserForm({ ...editUserForm, phone: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                    <TextInput placeholder="Yeni Şifre (boş bırakılabilir)" value={editUserForm.password} onChangeText={t => setEditUserForm({ ...editUserForm, password: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
 
                     <View className="flex-row gap-2 mt-2">
-                      <TouchableOpacity onPress={handleUpdateUser} className="flex-1 bg-green-600 p-2 rounded items-center"><Text className="text-white font-bold">Kaydet</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={cancelEditing} className="flex-1 bg-gray-200 p-2 rounded items-center"><Text className="text-gray-600 font-bold">İptal</Text></TouchableOpacity>
+                      <TouchableOpacity onPress={handleUpdateUser} className="flex-1 bg-green-500 py-3 rounded-xl items-center"><Text className="text-white font-bold">Kaydet</Text></TouchableOpacity>
+                      <TouchableOpacity onPress={cancelEditing} className="flex-1 bg-gray-500 py-3 rounded-xl items-center"><Text className="text-white font-bold">İptal</Text></TouchableOpacity>
                     </View>
                   </View>
                 ) : (
                   <View>
-                    <View className="mb-3">
-                      <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>{u.fullName} ({u.username})</Text>
-                      <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-xs`}>{u.role} {u.chiefdom ? ` - ${u.chiefdom.name} ` : ''}</Text>
-                      <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-xs`}>{u.email} | {u.phone}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                        <Text style={{ fontSize: 20, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>{u.fullName.charAt(0).toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 17, fontWeight: '700', color: isDark ? 'white' : '#111827', marginBottom: 2 }}>{u.fullName}</Text>
+                        <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 13 }}>@{u.username}</Text>
+                      </View>
+                      <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: isDark ? '#22D3EE15' : '#EFF6FF', borderWidth: 1, borderColor: isDark ? '#22D3EE30' : '#DBEAFE' }}>
+                        <Text style={{ color: isDark ? '#22D3EE' : '#2563EB', fontSize: 12, fontWeight: '700' }}>{roleLabels[u.role] || u.role}</Text>
+                      </View>
                     </View>
-                    <View className="flex-row gap-3">
-                      <TouchableOpacity onPress={() => startEditing(u)} className="flex-1 bg-blue-100 py-2 rounded-lg items-center justify-center">
-                        <Text className="text-tcdd-navy font-bold">Düzenle</Text>
+
+                    <View style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: isDark ? '#334155' : '#F1F5F9', marginBottom: 16 }}>
+                      {u.chiefdom && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Building2 size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
+                          <Text style={{ color: isDark ? '#E2E8F0' : '#374151', fontSize: 14, fontWeight: '500' }}>{u.chiefdom.name}</Text>
+                        </View>
+                      )}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Phone size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
+                        <Text style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: 14 }}>{u.phone || 'Telefon yok'}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Mail size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
+                        <Text style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: 14 }}>{u.email || 'E-posta yok'}</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity onPress={() => startEditing(u)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F3F4F6', gap: 8 }}>
+                        <Edit2 size={16} color={isDark ? '#E2E8F0' : '#4B5563'} />
+                        <Text style={{ color: isDark ? '#E2E8F0' : '#4B5563', fontWeight: 'bold', fontSize: 14 }}>Düzenle</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteUser(u.id)} className="flex-1 bg-red-100 py-2 rounded-lg items-center justify-center">
-                        <Text className="text-red-600 font-bold">Sil</Text>
+                      <TouchableOpacity onPress={() => handleDeleteUser(u.id)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#450a0a' : '#FEF2F2', gap: 8, borderWidth: 1, borderColor: isDark ? '#7f1d1d' : '#FEE2E2' }}>
+                        <Trash2 size={16} color="#EF4444" />
+                        <Text style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 14 }}>Sil</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 )}
               </View>
             ))}
-            {users.length === 0 && <Text className="text-gray-500 text-center mt-4">Kullanıcı bulunamadı.</Text>}
+            {users.length === 0 && (
+              <View style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+                <Users size={64} color={isDark ? '#334155' : '#E2E8F0'} style={{ marginBottom: 16 }} />
+                <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 16 }}>Kayıtlı personel bulunamadı.</Text>
+              </View>
+            )}
             <LoadingOverlay visible={loading} />
           </ScrollView>
         </View>
@@ -1571,77 +1604,105 @@ function AdminDashboard() {
 
     if (view === 'projects') {
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
           <RailGuardHeader user={user} title="Projeler" />
-          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {/* Unified Button Row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            {/* Header Actions */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
+                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
+                </View>
+                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateProject ? 'Kapat' : '+ Proje Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} style={{ backgroundColor: showCreateProject ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateProject ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateProject ? 'Kapat' : 'Proje Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
             {showCreateProject && (
-              <View className="mb-4 gap-2 border p-3 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
-                <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'} `}>Yeni Proje Oluştur</Text>
-                <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Bölgeyi Seçin:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ marginBottom: 20, padding: 16, borderRadius: 20, backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1 }}>
+                <Text style={{ fontWeight: 'bold', marginBottom: 12, fontSize: 16, color: isDark ? 'white' : '#1F2937' }}>Yeni Proje Oluştur</Text>
+                <Text style={{ color: isDark ? '#94A3B8' : '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' }}>Bağlı Olduğu Bölgeyi Seçin:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                   {regions.map(r => (
-                    <TouchableOpacity key={r.id} onPress={() => setSelectedRegionIdForProject(r.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedRegionIdForProject === r.id.toString() ? 'bg-blue-500 border-blue-500' : 'border-gray-300'} `}>
-                      <Text className={selectedRegionIdForProject === r.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{r.name}</Text>
+                    <TouchableOpacity key={r.id} onPress={() => setSelectedRegionIdForProject(r.id.toString())} style={{ marginRight: 8, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, backgroundColor: selectedRegionIdForProject === r.id.toString() ? (isDark ? '#3b82f6' : '#2563EB') : 'transparent', borderColor: selectedRegionIdForProject === r.id.toString() ? (isDark ? '#3b82f6' : '#2563EB') : (isDark ? '#4b5563' : '#D1D5DB') }}>
+                      <Text style={{ color: selectedRegionIdForProject === r.id.toString() ? 'white' : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: '600', fontSize: 13 }}>{r.name}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
 
-                <View className="flex-row gap-2 mt-2">
-                  <View className="flex-1 gap-2">
-                    <TextInput placeholder="Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Açıklama (Opsiyonel)" value={newProjectDesc} onChangeText={setNewProjectDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                <View style={{ gap: 12 }}>
+                  <View>
+                    <TextInput placeholder="Proje Adı (Örn: ISKRA)" value={newProjectName} onChangeText={setNewProjectName} className={`p-3 rounded-xl border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
                   </View>
-                  <TouchableOpacity onPress={handleCreateProject} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p - 2 rounded justify-center items-center w-20`}>
-                    <Text className="text-black font-bold">Ekle</Text>
+                  <View>
+                    <TextInput placeholder="Açıklama (Opsiyonel)" value={newProjectDesc} onChangeText={setNewProjectDesc} className={`p-3 rounded-xl border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <TouchableOpacity onPress={handleCreateProject} style={{ backgroundColor: isDark ? '#22D3EE' : '#0ea5e9', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                    <Text style={{ color: isDark ? '#0F172A' : 'white', fontWeight: 'bold' }}>Proje Oluştur</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             )}
 
-            {projects.map(p => (
-              <View key={p.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1">
-                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{p.name}</Text>
-                    {p.region && <Text className="text-blue-500 text-xs">{p.region.name}</Text>}
-                    {p.description && <Text className="text-gray-500 text-xs italic">{p.description}</Text>}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>Proje Listesi</Text>
+              <View style={{ backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
+                <Text style={{ color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 'bold', fontSize: 12 }}>{projects.length} Proje</Text>
+              </View>
+            </View>
 
-                    <View className="mt-2 pl-2 border-l-2 border-gray-200">
-                      <Text className="text-xs font-bold text-gray-500 mb-1">Şeflikler:</Text>
-                      {p.chiefdoms && p.chiefdoms.length > 0 ? (
-                        p.chiefdoms.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((c: any) => (
-                          <Text key={c.id} className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} `}>• {c.name}</Text>
-                        ))
-                      ) : <Text className="text-xs text-gray-400 italic">Şeflik yok</Text>}
-                    </View>
+            {projects.map(p => (
+              <View key={p.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 20, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+                <View style={{ paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: isDark ? '#334155' : '#F1F5F9', marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937', flex: 1 }}>{p.name}</Text>
+                    {p.region && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: isDark ? '#1e3a8a30' : '#EFF6FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                        <MapPin size={12} color={isDark ? '#60a5fa' : '#3b82f6'} />
+                        <Text style={{ color: isDark ? '#60a5fa' : '#3b82f6', fontSize: 12, fontWeight: 'bold' }}>{p.region.name}</Text>
+                      </View>
+                    )}
                   </View>
-                  <View className="ml-2 gap-2">
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedProjectForEdit(p);
-                        setEditProjectModalVisible(true);
-                      }}
-                      className="bg-blue-100 px-3 py-1 rounded w-20 items-center"
-                    >
-                      <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteProject(p.id)}
-                      className="bg-red-100 px-3 py-1 rounded w-20 items-center"
-                    >
-                      <Text className="text-red-600 text-xs font-bold">Sil</Text>
-                    </TouchableOpacity>
+                  {p.description && <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 14, fontStyle: 'italic' }}>{p.description}</Text>}
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <Building2 size={14} color={isDark ? '#94A3B8' : '#6B7280'} />
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: isDark ? '#94A3B8' : '#6B7280' }}>BAĞLI ŞEFLİKLER</Text>
                   </View>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {p.chiefdoms && p.chiefdoms.length > 0 ? (
+                      p.chiefdoms.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((c: any) => (
+                        <View key={c.id} style={{ backgroundColor: isDark ? '#334155' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}>
+                          <Text style={{ color: isDark ? '#CBD5E1' : '#4B5563', fontSize: 12 }}>{c.name}</Text>
+                        </View>
+                      ))
+                    ) : <Text style={{ color: isDark ? '#64748B' : '#9CA3AF', fontStyle: 'italic', fontSize: 13 }}>Şeflik bulunmuyor</Text>}
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedProjectForEdit(p);
+                      setEditProjectModalVisible(true);
+                    }}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F3F4F6', gap: 8 }}
+                  >
+                    <Edit2 size={16} color={isDark ? '#E2E8F0' : '#4B5563'} />
+                    <Text style={{ color: isDark ? '#E2E8F0' : '#4B5563', fontWeight: 'bold', fontSize: 14 }}>Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteProject(p.id)}
+                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#450a0a' : '#FEF2F2', gap: 8, borderWidth: 1, borderColor: isDark ? '#7f1d1d' : '#FEE2E2' }}
+                  >
+                    <Trash2 size={16} color="#EF4444" />
+                    <Text style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 14 }}>Sil</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -1665,62 +1726,84 @@ function AdminDashboard() {
 
     if (view === 'regions') {
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
           <RailGuardHeader user={user} title="Bölgeler" />
-          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {/* Unified Button Row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            {/* Header Actions */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
+                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
+                </View>
+                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateRegion ? 'Kapat' : '+ Bölge Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} style={{ backgroundColor: showCreateRegion ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateRegion ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateRegion ? 'Kapat' : 'Bölge Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
             {showCreateRegion && (
-              <View className="flex-row gap-2 mb-4 border p-3 rounded-xl border-gray-200 bg-gray-50 dark:bg-dark-card dark:border-gray-700">
-                <View className="flex-1 gap-2">
-                  <TextInput placeholder="Bölge Adı (Örn: 1. Bölge)" value={newRegionName} onChangeText={setNewRegionName} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                  <TextInput placeholder="Açıklama (Opsiyonel)" value={newRegionDesc} onChangeText={setNewRegionDesc} className={`p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+              <View style={{ marginBottom: 20, padding: 16, borderRadius: 20, backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1 }}>
+                <Text style={{ fontWeight: 'bold', marginBottom: 12, fontSize: 16, color: isDark ? 'white' : '#1F2937' }}>Yeni Bölge Oluştur</Text>
+                <View style={{ gap: 12 }}>
+                  <View>
+                    <TextInput placeholder="Bölge Adı (Örn: 1. Bölge)" value={newRegionName} onChangeText={setNewRegionName} className={`p-3 rounded-xl border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <View>
+                    <TextInput placeholder="Açıklama (Opsiyonel)" value={newRegionDesc} onChangeText={setNewRegionDesc} className={`p-3 rounded-xl border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <TouchableOpacity onPress={handleCreateRegion} style={{ backgroundColor: isDark ? '#22D3EE' : '#0ea5e9', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                    <Text style={{ color: isDark ? '#0F172A' : 'white', fontWeight: 'bold' }}>Bölge Oluştur</Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={handleCreateRegion} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
               </View>
             )}
 
-            {regions.map(r => (
-              <View key={r.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2`}>
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1">
-                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{r.name}</Text>
-                    {r.description && <Text className="text-gray-500 text-xs italic">{r.description}</Text>}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>Bölge Listesi</Text>
+              <View style={{ backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
+                <Text style={{ color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 'bold', fontSize: 12 }}>{regions.length} Bölge</Text>
+              </View>
+            </View>
 
-                    <View className="mt-2 pl-2 border-l-2 border-gray-200">
-                      <Text className="text-xs font-bold text-gray-500 mb-1">Projeler:</Text>
-                      {r.projects && r.projects.length > 0 ? (
-                        r.projects.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((p: any) => (
-                          <Text key={p.id} className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} `}>• {p.name}</Text>
-                        ))
-                      ) : <Text className="text-xs text-gray-400 italic">Proje yok</Text>}
+            {regions.map(r => (
+              <View key={r.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 20, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: isDark ? '#1e3a8a30' : '#EFF6FF', alignItems: 'center', justifyContent: 'center' }}>
+                      <MapPin size={20} color={isDark ? '#60a5fa' : '#3b82f6'} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>{r.name}</Text>
+                      {r.description && <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 12 }}>{r.description}</Text>}
                     </View>
                   </View>
-                  <View className="ml-2 gap-2">
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedRegionForEdit(r);
-                        setEditRegionModalVisible(true);
-                      }}
-                      className="bg-blue-100 px-3 py-1 rounded w-20 items-center"
-                    >
-                      <Text className="text-tcdd-navy text-xs font-bold">Düzenle</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteRegion(r.id)}
-                      className="bg-red-100 px-3 py-1 rounded w-20 items-center"
-                    >
-                      <Text className="text-red-600 text-xs font-bold">Sil</Text>
-                    </TouchableOpacity>
+                </View>
+
+                <View style={{ padding: 12, backgroundColor: isDark ? '#0f172a50' : '#F9FAFB', borderRadius: 12, marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDark ? '#94A3B8' : '#6B7280', marginBottom: 8, textTransform: 'uppercase' }}>Bağlı Projeler</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {r.projects && r.projects.length > 0 ? (
+                      r.projects.sort((a: any, b: any) => a.name.localeCompare(b.name)).map((p: any) => (
+                        <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: isDark ? '#334155' : 'white', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#475569' : '#E5E7EB' }}>
+                          <Briefcase size={12} color={isDark ? '#CBD5E1' : '#6B7280'} />
+                          <Text style={{ color: isDark ? '#E2E8F0' : '#374151', fontSize: 13, fontWeight: '500' }}>{p.name}</Text>
+                        </View>
+                      ))
+                    ) : <Text style={{ color: isDark ? '#64748B' : '#9CA3AF', fontStyle: 'italic', fontSize: 13 }}>Henüz proje eklenmemiş</Text>}
                   </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity onPress={() => { setSelectedRegionForEdit(r); setEditRegionModalVisible(true); }} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F3F4F6', gap: 8 }}>
+                    <Edit2 size={16} color={isDark ? '#E2E8F0' : '#4B5563'} />
+                    <Text style={{ color: isDark ? '#E2E8F0' : '#4B5563', fontWeight: 'bold', fontSize: 14 }}>Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteRegion(r.id)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#450a0a' : '#FEF2F2', gap: 8, borderWidth: 1, borderColor: isDark ? '#7f1d1d' : '#FEE2E2' }}>
+                    <Trash2 size={16} color="#EF4444" />
+                    <Text style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 14 }}>Sil</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -1747,92 +1830,115 @@ function AdminDashboard() {
       // Helper to render chiefdom list
       const renderChiefdomList = (list: any[]) => (
         list.map(c => (
-          <View key={c.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded border mb-2 ml-2`}>
-            <View className="flex-row justify-between items-center mb-2">
-              <View className="flex-1">
-                <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{c.name}</Text>
-
-                <View className="pl-2 border-l-2 border-gray-200 mb-4 mt-2">
-                  <Text className="text-xs text-gray-500 font-bold mb-1">Atanan Çalışanlar:</Text>
-                  {users.filter(u => u.chiefdom?.id == c.id).length > 0 ? (
-                    <View className="gap-1">
-                      {users.filter(u => u.chiefdom?.id == c.id).map(u => (
-                        <Text key={u.id} className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm`}>• {u.fullName} <Text className="text-gray-400 text-xs">({u.role})</Text></Text>
-                      ))}
-                    </View>
-                  ) : (
-                    <Text className="text-gray-400 text-xs italic">Çalışan atanmadı</Text>
-                  )}
+          <View key={c.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 20, marginBottom: 12, marginLeft: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: isDark ? '#1e3a8a30' : '#EFF6FF', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={22} color={isDark ? '#60a5fa' : '#3b82f6'} />
                 </View>
-
-                <View className="flex-row gap-3">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedChiefdomForEdit(c);
-                      setEditChiefdomModalVisible(true);
-                    }}
-                    className="flex-1 bg-blue-100 py-2 rounded-lg items-center justify-center"
-                  >
-                    <Text className="text-tcdd-navy font-bold">Düzenle</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} className="flex-1 bg-red-100 py-2 rounded-lg items-center justify-center">
-                    <Text className="text-red-600 font-bold">Sil</Text>
-                  </TouchableOpacity>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>{c.name}</Text>
+                  <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 13, fontWeight: '500' }}>
+                    {users.filter(u => u.chiefdom?.id == c.id).length} Personel
+                  </Text>
                 </View>
               </View>
+            </View>
+
+            <View style={{ padding: 12, backgroundColor: isDark ? '#0f172a50' : '#F9FAFB', borderRadius: 12, marginBottom: 16 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: isDark ? '#94A3B8' : '#6B7280', marginBottom: 8, textTransform: 'uppercase' }}>Atanan Personel</Text>
+              {users.filter(u => u.chiefdom?.id == c.id).length > 0 ? (
+                <View style={{ gap: 8 }}>
+                  {users.filter(u => u.chiefdom?.id == c.id).map(u => (
+                    <View key={u.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+                      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: isDark ? '#E2E8F0' : '#475569' }}>{u.fullName.charAt(0)}</Text>
+                      </View>
+                      <Text style={{ color: isDark ? '#E2E8F0' : '#374151', fontSize: 14 }}>{u.fullName}</Text>
+                      <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: isDark ? '#334155' : '#E5E7EB' }}>
+                        <Text style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#6B7280' }}>{roleLabels[u.role]}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={14} color={isDark ? '#94A3B8' : '#9CA3AF'} />
+                  <Text style={{ color: isDark ? '#64748B' : '#9CA3AF', fontStyle: 'italic', fontSize: 13 }}>Henüz personel atanmamış</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity onPress={() => { setSelectedChiefdomForEdit(c); setEditChiefdomModalVisible(true); }} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F3F4F6', gap: 8 }}>
+                <Edit2 size={16} color={isDark ? '#E2E8F0' : '#4B5563'} />
+                <Text style={{ color: isDark ? '#E2E8F0' : '#4B5563', fontWeight: 'bold', fontSize: 14 }}>Düzenle</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteChiefdom(c.id)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#450a0a' : '#FEF2F2', gap: 8, borderWidth: 1, borderColor: isDark ? '#7f1d1d' : '#FEE2E2' }}>
+                <Trash2 size={16} color="#EF4444" />
+                <Text style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 14 }}>Sil</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ))
       );
 
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
           <RailGuardHeader user={user} title="Şeflikler" />
-          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {/* Unified Button Row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            {/* Header Actions */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
+                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
+                </View>
+                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateChiefdom ? 'Kapat' : '+ Şeflik Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} style={{ backgroundColor: showCreateChiefdom ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateChiefdom ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateChiefdom ? 'Kapat' : 'Şeflik Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
             {showCreateChiefdom && (
-              <View className={`gap-2 mb - 6 border p-4 rounded-xl ${isDark ? 'bg-dark-card border-gray-700' : 'bg-gray-50 border-gray-200'} `}>
-                <Text className={`font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'} `}>Yeni Şeflik Oluştur</Text>
-                <Text className={isDark ? 'text-gray-300' : 'text-gray-600'}>Bağlı Olduğu Projeyi Seçin:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ marginBottom: 20, padding: 16, borderRadius: 20, backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1 }}>
+                <Text style={{ fontWeight: 'bold', marginBottom: 12, fontSize: 16, color: isDark ? 'white' : '#1F2937' }}>Yeni Şeflik Oluştur</Text>
+                <Text style={{ color: isDark ? '#94A3B8' : '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' }}>Bağlı Olduğu Projeyi Seçin:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                   {projects.map(p => (
-                    <TouchableOpacity key={p.id} onPress={() => setSelectedProjectId(p.id.toString())} className={`mr-2 px-3 py-1 rounded border ${selectedProjectId === p.id.toString() ? 'bg-blue-500 border-blue-500' : (isDark ? 'border-gray-600' : 'border-gray-300')} `}>
-                      <Text className={selectedProjectId === p.id.toString() ? 'text-white' : (isDark ? 'text-gray-300' : 'text-gray-800')}>{p.name}</Text>
+                    <TouchableOpacity key={p.id} onPress={() => setSelectedProjectId(p.id.toString())} style={{ marginRight: 8, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, backgroundColor: selectedProjectId === p.id.toString() ? (isDark ? '#3b82f6' : '#2563EB') : 'transparent', borderColor: selectedProjectId === p.id.toString() ? (isDark ? '#3b82f6' : '#2563EB') : (isDark ? '#4b5563' : '#D1D5DB') }}>
+                      <Text style={{ color: selectedProjectId === p.id.toString() ? 'white' : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: '600', fontSize: 13 }}>{p.name}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <View className="flex-row gap-2 mt-2">
-                  <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`flex-1 p-3 rounded border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                  <TouchableOpacity onPress={handleCreateChiefdom} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-3 rounded justify-center`}><Text className="text-black font-bold">Ekle</Text></TouchableOpacity>
+                <View style={{ gap: 12 }}>
+                  <View>
+                    <TextInput placeholder="Yeni Şeflik Adı" value={newChiefdom} onChangeText={setNewChiefdom} className={`p-3 rounded-xl border ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <TouchableOpacity onPress={handleCreateChiefdom} style={{ backgroundColor: isDark ? '#22D3EE' : '#0ea5e9', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                    <Text style={{ color: isDark ? '#0F172A' : 'white', fontWeight: 'bold' }}>Şeflik Oluştur</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
 
-            <View className="flex-col gap-2 mb-4">
-              <Text className={`font-bold ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Filtrele:</Text>
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontWeight: 'bold', color: isDark ? '#94A3B8' : '#6B7280', marginBottom: 8 }}>Filtrele:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <TouchableOpacity
                   onPress={() => setSelectedProjectId('')}
-                  className={`px-4 py-2 mr-2 rounded-full border ${selectedProjectId === '' ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} `}
+                  style={{ marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, backgroundColor: selectedProjectId === '' ? (isDark ? '#f97316' : '#ea580c') : 'transparent', borderColor: selectedProjectId === '' ? (isDark ? '#f97316' : '#ea580c') : (isDark ? '#4b5563' : '#D1D5DB') }}
                 >
-                  <Text className={`${selectedProjectId === '' ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} font-bold`}>Tüm Şeflikler</Text>
+                  <Text style={{ color: selectedProjectId === '' ? 'white' : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: 'bold', fontSize: 13 }}>Tüm Şeflikler</Text>
                 </TouchableOpacity>
                 {projects.map(p => (
                   <TouchableOpacity
                     key={p.id}
                     onPress={() => setSelectedProjectId(p.id.toString())}
-                    className={`px-4 py-2 mr-2 rounded-full border ${selectedProjectId === p.id.toString() ? 'bg-orange-500 border-orange-500' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} `}
+                    style={{ marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, backgroundColor: selectedProjectId === p.id.toString() ? (isDark ? '#f97316' : '#ea580c') : 'transparent', borderColor: selectedProjectId === p.id.toString() ? (isDark ? '#f97316' : '#ea580c') : (isDark ? '#4b5563' : '#D1D5DB') }}
                   >
-                    <Text className={`${selectedProjectId === p.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} font-bold`}>{p.name}</Text>
+                    <Text style={{ color: selectedProjectId === p.id.toString() ? 'white' : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: 'bold', fontSize: 13 }}>{p.name}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -1843,34 +1949,38 @@ function AdminDashboard() {
               selectedProjectId ? (
                 // Single Project View
                 <View>
-                  <Text className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'} `}>
-                    {projects.find(p => p.id.toString() === selectedProjectId)?.name || 'Proje'} Şeflikleri
-                  </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>
+                      {projects.find(p => p.id.toString() === selectedProjectId)?.name || 'Proje'} Şeflikleri
+                    </Text>
+                  </View>
                   {renderChiefdomList(chiefdoms.filter(c => c.projectId?.toString() === selectedProjectId))}
                   {chiefdoms.filter(c => c.projectId?.toString() === selectedProjectId).length === 0 && (
-                    <Text className="text-gray-500 italic">Bu projeye ait şeflik bulunamadı.</Text>
+                    <View style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+                      <Building2 size={64} color={isDark ? '#334155' : '#E2E8F0'} style={{ marginBottom: 16 }} />
+                      <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 16 }}>Bu projeye ait şeflik bulunamadı.</Text>
+                    </View>
                   )}
                 </View>
               ) : (
                 // All Projects Grouped View
-                <View className="gap-6">
+                <View style={{ gap: 24 }}>
                   {projects.map(p => {
                     const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
                     if (projectChiefdoms.length === 0) return null;
                     return (
                       <View key={p.id}>
-                        <View className={`p - 2 rounded mb-2 ${isDark ? 'bg-gray-800' : 'bg-gray-200'} `}>
-                          <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>{p.name}</Text>
+                        <View style={{ backgroundColor: isDark ? '#1e293b' : '#E5E7EB', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 12 }}>
+                          <Text style={{ fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>{p.name}</Text>
                         </View>
                         {renderChiefdomList(projectChiefdoms)}
                       </View>
                     );
                   })}
-                  {/* Unassigned Chiefdoms */}
                   {chiefdoms.filter(c => !c.projectId).length > 0 && (
                     <View>
-                      <View className={`p - 2 rounded mb-2 ${isDark ? 'bg-gray-800' : 'bg-gray-200'} `}>
-                        <Text className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Atanmamış Şeflikler</Text>
+                      <View style={{ backgroundColor: isDark ? '#1e293b' : '#E5E7EB', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 12 }}>
+                        <Text style={{ fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>Atanmamış Şeflikler</Text>
                       </View>
                       {renderChiefdomList(chiefdoms.filter(c => !c.projectId))}
                     </View>
@@ -1878,25 +1988,22 @@ function AdminDashboard() {
                 </View>
               )
             }
-
             <LoadingOverlay visible={loading} />
-            {
-              editChiefdomModalVisible && (
-                <EditChiefdomModal
-                  visible={editChiefdomModalVisible}
-                  onClose={() => setEditChiefdomModalVisible(false)}
-                  chiefdom={selectedChiefdomForEdit}
-                  regions={regions}
-                  projects={projects}
-                  onUpdate={() => {
-                    fetchData();
-                    setEditChiefdomModalVisible(false);
-                  }}
-                />
-              )
-            }
-          </ScrollView >
-        </View >
+            {editChiefdomModalVisible && (
+              <EditChiefdomModal
+                visible={editChiefdomModalVisible}
+                onClose={() => setEditChiefdomModalVisible(false)}
+                chiefdom={selectedChiefdomForEdit}
+                regions={regions}
+                projects={projects}
+                onUpdate={() => {
+                  fetchData();
+                  setEditChiefdomModalVisible(false);
+                }}
+              />
+            )}
+          </ScrollView>
+        </View>
       );
     }
 

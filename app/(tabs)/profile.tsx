@@ -1,7 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useScrollToTop } from '@react-navigation/native';
+import { Mail, Moon, Phone, Shield, Sun, User } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { RailGuardHeader } from '../../components/RailGuard/Header';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +17,15 @@ export default function ProfileScreen() {
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    // Theme colors
+    const pageBg = isDark ? '#0F172A' : '#FFFFFF';
+    const cardBg = isDark ? '#1E293B' : '#F8FAFC';
+    const borderColor = isDark ? '#334155' : '#E2E8F0';
+    const textPrimary = isDark ? '#FFFFFF' : '#1E293B';
+    const textSecondary = isDark ? '#94A3B8' : '#64748B';
+    const buttonBg = isDark ? '#22D3EE' : '#1c4ed8';
+    const buttonText = isDark ? '#0F172A' : '#FFFFFF';
 
     const handleChangePassword = async () => {
         if (!newPassword) {
@@ -44,110 +54,311 @@ export default function ProfileScreen() {
         setShowChangePassword(false);
     };
 
+    const getRoleDisplay = (role: string) => {
+        const roles: { [key: string]: string } = {
+            'admin': 'Yönetici',
+            'engineer': 'Mühendis',
+            'ctc_watchman': 'CTC Nöbetçisi',
+            'worker': 'İşçi'
+        };
+        return roles[role] || role?.replace('_', ' ');
+    };
+
+    const getRoleColor = () => {
+        if (isDark) return '#22D3EE';
+        return '#1c4ed8';
+    };
+
     return (
-        <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
             <RailGuardHeader user={user} title="Profil" showSearch={false} showGreeting={true} />
-            <ScrollView ref={ref} className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-gray-50'}`} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
-                <View className={`flex-1 p-6 items-center pt-8`}>
+            <ScrollView ref={ref} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
 
-                    {/* User Info */}
-                    <Text className={`text-2xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.fullName}</Text>
-                    <Text className={`mb-6 capitalize ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{user?.role?.replace('_', ' ')}</Text>
-
-                    <View className="w-full">
-                        {/* Username Card */}
-                        <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
-                            <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>KULLANICI ADI</Text>
-                            <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.username}</Text>
-                        </View>
-
-                        {/* Email Card */}
-                        {user?.email && (
-                            <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
-                                <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>E-POSTA</Text>
-                                <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.email}</Text>
-                            </View>
-                        )}
-
-                        {/* Phone Card */}
-                        {user?.phone && (
-                            <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
-                                <Text className={`text-xs uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>TELEFON</Text>
-                                <Text className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.phone}</Text>
-                            </View>
-                        )}
-
-                        {/* Theme Toggle */}
-                        <View className={`p-4 rounded-lg mb-3 ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
-                            <Text className={`text-xs uppercase mb-3 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>TEMA</Text>
-                            <View className={`flex-row rounded-lg p-1 ${isDark ? 'bg-[#1F2228]' : 'bg-gray-100'}`}>
-                                <TouchableOpacity
-                                    onPress={() => setTheme('light')}
-                                    className={`flex-1 py-2 rounded-md items-center ${theme === 'light' ? (isDark ? 'bg-gray-600' : 'bg-white shadow-sm') : ''}`}
-                                >
-                                    <Text className={`font-medium ${theme === 'light' ? (isDark ? 'text-white' : 'text-gray-900') : 'text-gray-500'}`}>Açık</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => setTheme('dark')}
-                                    className={`flex-1 py-2 rounded-md items-center ${theme === 'dark' ? (isDark ? 'bg-gray-600' : 'bg-gray-900 shadow-sm') : ''}`}
-                                >
-                                    <Text className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-500'}`}>Koyu</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        {/* Password Change Section */}
-                        <TouchableOpacity
-                            onPress={() => showChangePassword ? handleCancelPasswordChange() : setShowChangePassword(true)}
-                            className={`p-4 rounded-lg mb-3 flex-row justify-between items-center ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}
-                        >
-                            <Text className={`${isDark ? 'text-white' : 'text-gray-900'} font-medium`}>Şifre Değiştir</Text>
-                            <FontAwesome name={showChangePassword ? "chevron-up" : "chevron-down"} size={14} color={isDark ? "#9CA3AF" : "#6B7280"} />
-                        </TouchableOpacity>
-
-                        {showChangePassword && (
-                            <View className={`mb-4 p-4 rounded-lg ${isDark ? 'bg-[#2C3036]' : 'bg-white border border-gray-200'}`}>
-                                <TextInput
-                                    placeholder="Yeni Şifre"
-                                    placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                                    value={newPassword}
-                                    onChangeText={setNewPassword}
-                                    secureTextEntry
-                                    className={`p-3 rounded border mb-3 ${isDark ? 'bg-[#1F2228] border-gray-700 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
-                                />
-                                <TextInput
-                                    placeholder="Şifreyi Onayla"
-                                    placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                                    value={confirmPassword}
-                                    onChangeText={setConfirmPassword}
-                                    secureTextEntry
-                                    className={`p-3 rounded border mb-3 ${isDark ? 'bg-[#1F2228] border-gray-700 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
-                                />
-                                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-                                    <Text className="text-red-600 text-xs mb-3">Şifreler eşleşmiyor</Text>
-                                )}
-                                <View className="flex-row gap-3">
-                                    <TouchableOpacity
-                                        onPress={handleChangePassword}
-                                        disabled={!newPassword || newPassword !== confirmPassword}
-                                        style={{ flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', backgroundColor: (!newPassword || newPassword !== confirmPassword) ? '#D1D5DB' : '#1c4ed8' }}
-                                    >
-                                        <Text style={{ fontWeight: 'bold', color: (!newPassword || newPassword !== confirmPassword) ? '#9CA3AF' : '#FFFFFF' }}>Güncelle</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={handleCancelPasswordChange} className={`flex-1 p-3 rounded-lg items-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} font-bold`}>İptal</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
-
-                        {/* Logout Button */}
-                        <TouchableOpacity onPress={signOut} className={`p-4 rounded-lg items-center mt-4 ${isDark ? 'bg-red-900/30 border border-red-900' : 'bg-red-50 border border-red-200'}`}>
-                            <Text className="text-red-600 font-bold">Çıkış Yap</Text>
-                        </TouchableOpacity>
+                {/* Profile Avatar Section */}
+                <View style={styles.avatarSection}>
+                    <View style={[styles.avatarContainer, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]}>
+                        <User size={48} color={isDark ? '#94A3B8' : '#64748B'} />
                     </View>
+                    <Text style={[styles.userName, { color: textPrimary }]}>{user?.fullName}</Text>
+                    <View style={[styles.roleTag, { backgroundColor: isDark ? '#22D3EE20' : '#1c4ed820' }]}>
+                        <Shield size={14} color={getRoleColor()} />
+                        <Text style={[styles.roleText, { color: getRoleColor() }]}>{getRoleDisplay(user?.role || '')}</Text>
+                    </View>
+                </View>
+
+                {/* Info Cards */}
+                <View style={styles.cardsContainer}>
+
+                    {/* Username */}
+                    <View style={[styles.infoCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+                        <View style={[styles.iconBg, { backgroundColor: isDark ? '#64748B20' : '#E2E8F0' }]}>
+                            <User size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+                        </View>
+                        <View style={styles.infoContent}>
+                            <Text style={[styles.infoLabel, { color: textSecondary }]}>Kullanıcı Adı</Text>
+                            <Text style={[styles.infoValue, { color: textPrimary }]}>{user?.username}</Text>
+                        </View>
+                    </View>
+
+                    {/* Email */}
+                    {user?.email && (
+                        <View style={[styles.infoCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+                            <View style={[styles.iconBg, { backgroundColor: isDark ? '#64748B20' : '#E2E8F0' }]}>
+                                <Mail size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+                            </View>
+                            <View style={styles.infoContent}>
+                                <Text style={[styles.infoLabel, { color: textSecondary }]}>E-posta</Text>
+                                <Text style={[styles.infoValue, { color: textPrimary }]}>{user?.email}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Phone */}
+                    {user?.phone && (
+                        <View style={[styles.infoCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+                            <View style={[styles.iconBg, { backgroundColor: isDark ? '#64748B20' : '#E2E8F0' }]}>
+                                <Phone size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+                            </View>
+                            <View style={styles.infoContent}>
+                                <Text style={[styles.infoLabel, { color: textSecondary }]}>Telefon</Text>
+                                <Text style={[styles.infoValue, { color: textPrimary }]}>{user?.phone}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Theme Toggle */}
+                    <View style={[styles.themeCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+                        <Text style={[styles.sectionTitle, { color: textPrimary }]}>Tema</Text>
+                        <View style={[styles.themeToggle, { backgroundColor: isDark ? '#0F172A' : '#E2E8F0' }]}>
+                            <TouchableOpacity
+                                onPress={() => setTheme('light')}
+                                style={[
+                                    styles.themeOption,
+                                    theme === 'light' && { backgroundColor: isDark ? '#334155' : '#FFFFFF' }
+                                ]}
+                            >
+                                <Sun size={18} color={theme === 'light' ? (isDark ? '#FACC15' : '#F59E0B') : textSecondary} />
+                                <Text style={[styles.themeText, { color: theme === 'light' ? textPrimary : textSecondary }]}>Açık</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setTheme('dark')}
+                                style={[
+                                    styles.themeOption,
+                                    theme === 'dark' && { backgroundColor: isDark ? '#334155' : '#1E293B' }
+                                ]}
+                            >
+                                <Moon size={18} color={theme === 'dark' ? '#22D3EE' : textSecondary} />
+                                <Text style={[styles.themeText, { color: theme === 'dark' ? (isDark ? '#FFFFFF' : '#FFFFFF') : textSecondary }]}>Koyu</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Password Change */}
+                    <TouchableOpacity
+                        onPress={() => showChangePassword ? handleCancelPasswordChange() : setShowChangePassword(true)}
+                        style={[styles.infoCard, { backgroundColor: cardBg, borderColor: borderColor }]}
+                    >
+                        <View style={[styles.iconBg, { backgroundColor: isDark ? '#64748B20' : '#E2E8F0' }]}>
+                            <FontAwesome name="lock" size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+                        </View>
+                        <View style={styles.infoContent}>
+                            <Text style={[styles.infoValue, { color: textPrimary }]}>Şifre Değiştir</Text>
+                        </View>
+                        <FontAwesome name={showChangePassword ? "chevron-up" : "chevron-down"} size={14} color={textSecondary} />
+                    </TouchableOpacity>
+
+                    {showChangePassword && (
+                        <View style={[styles.passwordCard, { backgroundColor: cardBg, borderColor: borderColor }]}>
+                            <TextInput
+                                placeholder="Yeni Şifre"
+                                placeholderTextColor={textSecondary}
+                                value={newPassword}
+                                onChangeText={setNewPassword}
+                                secureTextEntry
+                                style={[styles.input, { backgroundColor: isDark ? '#0F172A' : '#F1F5F9', borderColor: borderColor, color: textPrimary }]}
+                            />
+                            <TextInput
+                                placeholder="Şifreyi Onayla"
+                                placeholderTextColor={textSecondary}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry
+                                style={[styles.input, { backgroundColor: isDark ? '#0F172A' : '#F1F5F9', borderColor: borderColor, color: textPrimary }]}
+                            />
+                            {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                                <Text style={styles.errorText}>Şifreler eşleşmiyor</Text>
+                            )}
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity
+                                    onPress={handleChangePassword}
+                                    disabled={!newPassword || newPassword !== confirmPassword}
+                                    style={[styles.button, {
+                                        backgroundColor: (!newPassword || newPassword !== confirmPassword) ? '#64748B' : buttonBg,
+                                        flex: 1
+                                    }]}
+                                >
+                                    <Text style={[styles.buttonText, { color: buttonText }]}>Güncelle</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={handleCancelPasswordChange}
+                                    style={[styles.button, { backgroundColor: isDark ? '#334155' : '#E2E8F0', flex: 1 }]}
+                                >
+                                    <Text style={[styles.buttonText, { color: textPrimary }]}>İptal</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Logout Button */}
+                    <TouchableOpacity
+                        onPress={signOut}
+                        style={[styles.logoutButton, {
+                            backgroundColor: isDark ? '#7F1D1D20' : '#FEF2F2',
+                            borderColor: isDark ? '#7F1D1D' : '#FECACA'
+                        }]}
+                    >
+                        <FontAwesome name="sign-out" size={18} color="#EF4444" style={{ marginRight: 8 }} />
+                        <Text style={styles.logoutText}>Çıkış Yap</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    avatarSection: {
+        alignItems: 'center',
+        paddingVertical: 24,
+    },
+    avatarContainer: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    userName: {
+        fontSize: 24,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    roleTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 6,
+    },
+    roleText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    cardsContainer: {
+        paddingHorizontal: 16,
+    },
+    infoCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+    },
+    iconBg: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 14,
+    },
+    infoContent: {
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 12,
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    infoValue: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    themeCard: {
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 12,
+    },
+    themeToggle: {
+        flexDirection: 'row',
+        borderRadius: 10,
+        padding: 4,
+    },
+    themeOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 8,
+    },
+    themeText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    passwordCard: {
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+    },
+    input: {
+        padding: 14,
+        borderRadius: 8,
+        borderWidth: 1,
+        marginBottom: 12,
+        fontSize: 15,
+    },
+    errorText: {
+        color: '#EF4444',
+        fontSize: 12,
+        marginBottom: 12,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    button: {
+        padding: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    buttonText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginTop: 8,
+    },
+    logoutText: {
+        color: '#EF4444',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});
