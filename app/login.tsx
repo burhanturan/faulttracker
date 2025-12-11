@@ -43,17 +43,17 @@ export default function LoginScreen() {
     };
 
     return (
-        <View className="flex-1">
+        <View style={{ flex: 1 }}>
             <LinearGradient
                 colors={isDark ? ['#1E1E1E', '#121212'] : ['#F3F4F6', '#E5E7EB']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="flex-1 justify-center items-center"
+                style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
             >
-                <SafeAreaView className="flex-1 w-full justify-center items-center">
+                <SafeAreaView style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        className="flex-1 w-full"
+                        style={{ flex: 1, width: '100%' }}
                     >
                         <ScrollView
                             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}

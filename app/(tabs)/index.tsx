@@ -1050,7 +1050,7 @@ function AdminDashboard() {
         return (
           <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
             <RailGuardHeader user={user} onSearch={setSearchQuery} />
-            <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
+            <ScrollView style={{ flex: 1 }} className="pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
               <Text className="text-white text-lg font-bold mb-4">Arama Sonuçları ({filteredFaults.length})</Text>
               {filteredFaults.map(f => (
                 <TouchableOpacity key={f.id} onPress={() => { /* Handle detail view later */ }} className="bg-white/10 p-4 rounded-xl mb-3 border border-white/5">
@@ -1075,7 +1075,7 @@ function AdminDashboard() {
       return (
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} onSearch={setSearchQuery} />
-          <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+          <ScrollView style={{ flex: 1 }} className="pt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
             {/* KPI Grid */}
             {/* Row 1: Açık Arızalar - Full Width */}
             <View className="mb-2">
@@ -1944,7 +1944,7 @@ function WorkerDashboard() {
 
   if (closingFaultId) {
     return (
-      <View className="flex-1">
+      <View style={{ flex: 1 }}>
         <View className="gap-4 pb-10">
           <TouchableOpacity onPress={() => setClosingFaultId(null)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
             <Text className="text-black font-bold">← Arızalara Dön</Text>
@@ -2076,8 +2076,8 @@ export default function Dashboard() {
 
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-      <ScrollView ref={ref} className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'}`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView ref={ref} style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
         <View className="px-4 py-6">
           {renderContent()}
         </View>
