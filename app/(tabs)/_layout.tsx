@@ -249,9 +249,7 @@ export default function TabLayout() {
         options={{
           title: 'Ana Sayfa',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
-          headerShown: true,
-          headerRight: () => <HeaderProfileButton />,
-          headerTitleAlign: 'center',
+          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -259,9 +257,7 @@ export default function TabLayout() {
         options={{
           title: 'Geçmiş',
           tabBarIcon: ({ color }) => <TabBarIcon name="history" color={color} />,
-          headerShown: true,
-          headerRight: () => <HeaderProfileButton />,
-          headerTitleAlign: 'center',
+          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -269,8 +265,7 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-          headerShown: true,
-          headerTitleAlign: 'center',
+          headerShown: false,
         }}
       />
     </Tabs>

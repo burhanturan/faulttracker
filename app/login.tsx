@@ -43,17 +43,17 @@ export default function LoginScreen() {
     };
 
     return (
-        <View className="flex-1">
+        <View style={{ flex: 1 }}>
             <LinearGradient
                 colors={isDark ? ['#1E1E1E', '#121212'] : ['#F3F4F6', '#E5E7EB']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="flex-1 justify-center items-center"
+                style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
             >
-                <SafeAreaView className="flex-1 w-full justify-center items-center">
+                <SafeAreaView style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        className="flex-1 w-full"
+                        style={{ flex: 1, width: '100%' }}
                     >
                         <ScrollView
                             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}
@@ -63,8 +63,8 @@ export default function LoginScreen() {
                             {/* Logo Section */}
                             <View className="items-center mb-8">
                                 <View className="flex-row items-center mb-2">
-                                    <FontAwesome name="train" size={40} color={isDark ? "white" : "#EAB308"} style={{ marginRight: 10 }} />
-                                    <Text className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} tracking-wider`}>FAULT<Text className={isDark ? "text-red-500" : "text-yellow-500"}>TRACKER</Text></Text>
+                                    <FontAwesome name="train" size={40} color={isDark ? "white" : "#1c4ed8"} style={{ marginRight: 10 }} />
+                                    <Text className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} tracking-wider`}>FAULT<Text style={{ color: '#1c4ed8' }}>TRACKER</Text></Text>
                                 </View>
                                 <Text className={`${isDark ? 'text-gray-300' : 'text-gray-500'} text-sm tracking-widest uppercase`}>Demiryolu Bakım Sistemi</Text>
                             </View>
@@ -118,10 +118,10 @@ export default function LoginScreen() {
 
                                 {/* Sign In Button */}
                                 <TouchableOpacity
-                                    className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} h-12 rounded-md items-center justify-center active:opacity-90 shadow-md`}
+                                    style={{ backgroundColor: '#1c4ed8', height: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
                                     onPress={handleLogin}
                                 >
-                                    <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg uppercase tracking-wide`}>Giriş Yap</Text>
+                                    <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, textTransform: 'uppercase', letterSpacing: 1 }}>Giriş Yap</Text>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>
