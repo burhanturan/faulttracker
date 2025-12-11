@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface HeaderProps {
     user: any;
     onSearch?: (text: string) => void;
+    title?: string;
 }
 
-export const RailGuardHeader: React.FC<HeaderProps> = ({ user, onSearch }) => {
+export const RailGuardHeader: React.FC<HeaderProps> = ({ user, onSearch, title }) => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     // With opaque status bar, we don't need top inset padding for the view itself, 
@@ -48,7 +49,7 @@ export const RailGuardHeader: React.FC<HeaderProps> = ({ user, onSearch }) => {
                 {/* Top Row: Title & Actions */}
                 <View className="flex-row justify-between items-start mb-8">
                     <View className="mt-1">
-                        <Text className="text-white text-3xl font-bold tracking-tight leading-tight">Admin Paneli</Text>
+                        <Text className="text-white text-3xl font-bold tracking-tight leading-tight">{title || 'Admin Paneli'}</Text>
                         <Text className="text-blue-100 text-lg font-medium mt-1">Merhaba, {user?.fullName || 'Chief Engineer'}</Text>
                     </View>
                     <View className="flex-row gap-3">
