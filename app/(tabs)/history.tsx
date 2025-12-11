@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { RailGuardHeader } from '../../components/RailGuard/Header';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../lib/api';
@@ -17,6 +18,23 @@ export default function HistoryScreen() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredHistory, setFilteredHistory] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredHistory(history);
+            return;
+        }
+        const query = searchQuery.toLowerCase();
+        const results = history.filter(f =>
+            f.title?.toLowerCase().includes(query) ||
+            f.description?.toLowerCase().includes(query) ||
+            f.id.toString().includes(query) ||
+            f.status?.toLowerCase().includes(query)
+        );
+        setFilteredHistory(results);
+    }, [searchQuery, history]);
 
     useFocusEffect(
         useCallback(() => {
@@ -392,273 +410,346 @@ export default function HistoryScreen() {
 
     if (selectedFault) {
         return (
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Arıza Detayları</Text>
-                        <TouchableOpacity onPress={() => setSelectedFault(null)}>
-                            <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} font-bold`}>Kapat</Text>
-                        </TouchableOpacity>
-                    </View>
+            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+                <RailGuardHeader user={user} title="Arıza Detayı" showSearch={false} showGreeting={false} />
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
+                        <View className="flex-row justify-end mb-4">
+                            <TouchableOpacity onPress={() => setSelectedFault(null)} className="p-2">
+                                <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} font-bold`}>Kapat X</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                    <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-xl border mb-4`}>
-                        <Text className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.title}</Text>
-                        <Text className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{selectedFault.description}</Text>
+                        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-xl border mb-4`}>
+                            <Text className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.title}</Text>
+                            <Text className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{selectedFault.description}</Text>
 
-                        <View className="gap-3">
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Arıza Tarihi</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.faultDate} onChangeText={t => setEditForm({ ...editForm, faultDate: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultDate || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Arıza Saati</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.faultTime} onChangeText={t => setEditForm({ ...editForm, faultTime: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultTime || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Bildiren Kişi</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.reporterName} onChangeText={t => setEditForm({ ...editForm, reporterName: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.reporterName || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Hat Bilgisi</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.lineInfo} onChangeText={t => setEditForm({ ...editForm, lineInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.lineInfo || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Kapanış Arıza Bilgisi</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.closureFaultInfo} onChangeText={t => setEditForm({ ...editForm, closureFaultInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.closureFaultInfo || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Çözüm</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.solution} onChangeText={t => setEditForm({ ...editForm, solution: t })} multiline className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.solution || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">Çalışan Personel</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.workingPersonnel} onChangeText={t => setEditForm({ ...editForm, workingPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.workingPersonnel || '-'}</Text>
-                                )}
-                            </View>
-                            <View>
-                                <Text className="font-bold text-gray-500 text-xs">TCDD Personeli</Text>
-                                {isEditing ? (
-                                    <TextInput value={editForm.tcddPersonnel} onChangeText={t => setEditForm({ ...editForm, tcddPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                ) : (
-                                    <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.tcddPersonnel || '-'}</Text>
-                                )}
-                            </View>
-
-                            {/* Image Management in Edit Mode */}
-                            {isEditing && (
+                            <View className="gap-3">
                                 <View>
-                                    <Text className="font-bold text-gray-500 text-xs mb-2">Mevcut Fotoğraflar</Text>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                                        {editForm.images && editForm.images.map((img: any, index: number) => (
-                                            <View key={index} className="relative">
-                                                <Image source={{ uri: img.url }} className="w-20 h-20 rounded-lg bg-gray-200" />
-                                                <TouchableOpacity onPress={() => handleDeleteImage(img.id)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
-                                                    <Text className="text-white font-bold">X</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-                                        {(!editForm.images || editForm.images.length === 0) && (
-                                            <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>Fotoğraf yok</Text>
-                                        )}
-                                    </ScrollView>
+                                    <Text className="font-bold text-gray-500 text-xs">Arıza Tarihi</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.faultDate} onChangeText={t => setEditForm({ ...editForm, faultDate: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultDate || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Arıza Saati</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.faultTime} onChangeText={t => setEditForm({ ...editForm, faultTime: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultTime || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Bildiren Kişi</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.reporterName} onChangeText={t => setEditForm({ ...editForm, reporterName: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.reporterName || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Hat Bilgisi</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.lineInfo} onChangeText={t => setEditForm({ ...editForm, lineInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.lineInfo || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Kapanış Arıza Bilgisi</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.closureFaultInfo} onChangeText={t => setEditForm({ ...editForm, closureFaultInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.closureFaultInfo || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Çözüm</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.solution} onChangeText={t => setEditForm({ ...editForm, solution: t })} multiline className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.solution || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">Çalışan Personel</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.workingPersonnel} onChangeText={t => setEditForm({ ...editForm, workingPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.workingPersonnel || '-'}</Text>
+                                    )}
+                                </View>
+                                <View>
+                                    <Text className="font-bold text-gray-500 text-xs">TCDD Personeli</Text>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.tcddPersonnel} onChangeText={t => setEditForm({ ...editForm, tcddPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
+                                    ) : (
+                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.tcddPersonnel || '-'}</Text>
+                                    )}
+                                </View>
 
-                                    <Text className="font-bold text-gray-500 text-xs mb-2">Yeni Fotoğraf Ekle</Text>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                                        {editForm.newImages && editForm.newImages.map((uri: string, index: number) => (
-                                            <View key={index} className="relative">
-                                                <Image source={{ uri }} className="w-20 h-20 rounded-lg bg-gray-200" />
-                                                <TouchableOpacity onPress={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
-                                                    <Text className="text-white font-bold">X</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-                                        <TouchableOpacity onPress={pickNewImage} className={`w-20 h-20 rounded-lg items-center justify-center border-2 border-dashed ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
-                                            <Text className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>+</Text>
+                                {/* Image Management in Edit Mode */}
+                                {isEditing && (
+                                    <View>
+                                        <Text className="font-bold text-gray-500 text-xs mb-2">Mevcut Fotoğraflar</Text>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                                            {editForm.images && editForm.images.map((img: any, index: number) => (
+                                                <View key={index} className="relative">
+                                                    <Image source={{ uri: img.url }} className="w-20 h-20 rounded-lg bg-gray-200" />
+                                                    <TouchableOpacity onPress={() => handleDeleteImage(img.id)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
+                                                        <Text className="text-white font-bold">X</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            ))}
+                                            {(!editForm.images || editForm.images.length === 0) && (
+                                                <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>Fotoğraf yok</Text>
+                                            )}
+                                        </ScrollView>
+
+                                        <Text className="font-bold text-gray-500 text-xs mb-2">Yeni Fotoğraf Ekle</Text>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                                            {editForm.newImages && editForm.newImages.map((uri: string, index: number) => (
+                                                <View key={index} className="relative">
+                                                    <Image source={{ uri }} className="w-20 h-20 rounded-lg bg-gray-200" />
+                                                    <TouchableOpacity onPress={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
+                                                        <Text className="text-white font-bold">X</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            ))}
+                                            <TouchableOpacity onPress={pickNewImage} className={`w-20 h-20 rounded-lg items-center justify-center border-2 border-dashed ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
+                                                <Text className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>+</Text>
+                                            </TouchableOpacity>
+                                        </ScrollView>
+                                    </View>
+                                )}
+
+                                {!isEditing && selectedFault.images && selectedFault.images.length > 0 && (
+                                    <View>
+                                        <Text className="font-bold text-gray-500 text-xs mb-2">Fotoğraflar</Text>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                                            {selectedFault.images.map((img: any, index: number) => (
+                                                <Image
+                                                    key={index}
+                                                    source={{ uri: img.url }}
+                                                    className="w-40 h-40 rounded-lg bg-gray-200"
+                                                    resizeMode="cover"
+                                                />
+                                            ))}
+                                        </ScrollView>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+
+                        {canEdit && (
+                            <View className="mb-8">
+                                {isEditing ? (
+                                    <View className="flex-row gap-2">
+                                        <TouchableOpacity onPress={handleUpdate} className="flex-1 bg-green-600 p-3 rounded items-center"><Text className="text-white font-bold">Değişiklikleri Kaydet</Text></TouchableOpacity>
+                                        <TouchableOpacity onPress={() => setIsEditing(false)} className="flex-1 bg-gray-200 p-3 rounded items-center"><Text className="text-gray-600 font-bold">İptal</Text></TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View className="flex-row gap-2">
+                                        <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-1 bg-blue-600 p-3 rounded items-center">
+                                            <Text className="text-white font-bold">Düzenle</Text>
                                         </TouchableOpacity>
-                                    </ScrollView>
-                                </View>
-                            )}
+                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} className="flex-1 bg-red-600 p-3 rounded items-center">
+                                            <Text className="text-white font-bold">Sil</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+                    </ScrollView>
 
-                            {!isEditing && selectedFault.images && selectedFault.images.length > 0 && (
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs mb-2">Fotoğraflar</Text>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                                        {selectedFault.images.map((img: any, index: number) => (
-                                            <Image
-                                                key={index}
-                                                source={{ uri: img.url }}
-                                                className="w-40 h-40 rounded-lg bg-gray-200"
-                                                resizeMode="cover"
-                                            />
-                                        ))}
-                                    </ScrollView>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    {canEdit && (
-                        <View className="mb-8">
-                            {isEditing ? (
-                                <View className="flex-row gap-2">
-                                    <TouchableOpacity onPress={handleUpdate} className="flex-1 bg-green-600 p-3 rounded items-center"><Text className="text-white font-bold">Değişiklikleri Kaydet</Text></TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setIsEditing(false)} className="flex-1 bg-gray-200 p-3 rounded items-center"><Text className="text-gray-600 font-bold">İptal</Text></TouchableOpacity>
-                                </View>
-                            ) : (
-                                <View className="flex-row gap-2">
-                                    <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-1 bg-blue-600 p-3 rounded items-center">
-                                        <Text className="text-white font-bold">Düzenle</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} className="flex-1 bg-red-600 p-3 rounded items-center">
-                                        <Text className="text-white font-bold">Sil</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
-                    )}
-                </ScrollView>
-
-                <CustomAlert
-                    visible={alertConfig.visible}
-                    title={alertConfig.title}
-                    message={alertConfig.message}
-                    type={alertConfig.type}
-                    onClose={closeAlert}
-                    onConfirm={alertConfig.onConfirm}
-                />
-                <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
-            </KeyboardAvoidingView >
+                    <CustomAlert
+                        visible={alertConfig.visible}
+                        title={alertConfig.title}
+                        message={alertConfig.message}
+                        type={alertConfig.type}
+                        onClose={closeAlert}
+                        onConfirm={alertConfig.onConfirm}
+                    />
+                    <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
+                </KeyboardAvoidingView >
+            </View>
         );
     }
 
     if (showCreateModal) {
         return (
+            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+                <RailGuardHeader user={user} title="Yeni Arıza" showSearch={false} showGreeting={false} />
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
+                        <View className="flex-row justify-end mb-4">
+                            <TouchableOpacity onPress={() => setShowCreateModal(false)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-4 py-2 rounded-lg shadow-sm`}>
+                                <Text className="text-black font-bold">İptal Et</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="gap-3 mb-8">
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Başlığı *</Text>
+                                <TextInput value={createForm.title} onChangeText={t => setCreateForm({ ...createForm, title: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="Arıza Başlığı" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Açıklama *</Text>
+                                <TextInput value={createForm.description} onChangeText={t => setCreateForm({ ...createForm, description: t })} multiline className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" placeholder="Arıza Açıklaması" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+
+                            <View>
+                                <Text className={`font-bold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Fotoğraflar</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                                    {images.map((uri, index) => (
+                                        <View key={index} className="relative">
+                                            <Image source={{ uri }} className="w-20 h-20 rounded-lg bg-gray-200" />
+                                            <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
+                                                <Text className="text-white font-bold">X</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                    <TouchableOpacity onPress={pickImage} className={`w-20 h-20 rounded-lg items-center justify-center border-2 border-dashed ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
+                                        <Text className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>+</Text>
+                                    </TouchableOpacity>
+                                </ScrollView>
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Şeflik *</Text>
+                                {user?.role === 'worker' && (user as any).chiefdomId ? (
+                                    <View className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                                        <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                            {chiefdoms.find(c => c.id.toString() === (user as any).chiefdomId.toString())?.name || 'Yükleniyor...'}
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <View className="flex-row flex-wrap gap-2">
+                                        {chiefdoms.map(c => (
+                                            <TouchableOpacity
+                                                key={c.id}
+                                                onPress={() => setCreateForm({ ...createForm, chiefdomId: c.id.toString() })}
+                                                className={`px-3 py-2 rounded border ${createForm.chiefdomId === c.id.toString() ? 'bg-blue-600 border-blue-600' : isDark ? 'bg-dark-card border-gray-700' : 'bg-white border-gray-200'}`}
+                                            >
+                                                <Text className={`${createForm.chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{c.name}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
+
+                            <Text className={`text-lg font-bold mt-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Kapanış Detayları</Text>
+
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Tarihi</Text>
+                                <TextInput value={createForm.faultDate} onChangeText={t => setCreateForm({ ...createForm, faultDate: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="GG.AA.YYYY" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Saati</Text>
+                                <TextInput value={createForm.faultTime} onChangeText={t => setCreateForm({ ...createForm, faultTime: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="SS:DD" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Bildiren Kişi</Text>
+                                <TextInput value={createForm.reporterName} onChangeText={t => setCreateForm({ ...createForm, reporterName: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Hat Bilgisi</Text>
+                                <TextInput value={createForm.lineInfo} onChangeText={t => setCreateForm({ ...createForm, lineInfo: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Bilgisi</Text>
+                                <TextInput value={createForm.closureFaultInfo} onChangeText={t => setCreateForm({ ...createForm, closureFaultInfo: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Çözüm</Text>
+                                <TextInput value={createForm.solution} onChangeText={t => setCreateForm({ ...createForm, solution: t })} multiline className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Çalışan Personel</Text>
+                                <TextInput value={createForm.workingPersonnel} onChangeText={t => setCreateForm({ ...createForm, workingPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>TCDD Personeli</Text>
+                                <TextInput value={createForm.tcddPersonnel} onChangeText={t => setCreateForm({ ...createForm, tcddPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                            </View>
+
+                            <TouchableOpacity onPress={handleCreateClosedFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-lg items-center mt-4`}>
+                                <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Oluştur</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+
+                    <CustomAlert
+                        visible={alertConfig.visible}
+                        title={alertConfig.title}
+                        message={alertConfig.message}
+                        type={alertConfig.type}
+                        onClose={closeAlert}
+                        onConfirm={alertConfig.onConfirm}
+                    />
+                    <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
+                </KeyboardAvoidingView >
+            </View>
+        );
+    }
+
+    return (
+        <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+            <RailGuardHeader
+                user={user}
+                title="Geçmiş"
+                showSearch={true}
+                showGreeting={true}
+                onSearch={setSearchQuery}
+            />
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Yeni Arıza Girişi</Text>
-                        <TouchableOpacity onPress={() => setShowCreateModal(false)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-4 py-2 rounded-lg shadow-sm`}>
-                            <Text className="text-black font-bold">İptal</Text>
+                <ScrollView
+                    ref={ref}
+                    className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ width: '100%', paddingBottom: 100, paddingTop: 20 }}
+                >
+                    <View className="mb-4 items-center">
+                        <TouchableOpacity onPress={openCreateModal} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-6 py-3 rounded-lg shadow-md w-full items-center mb-4`}>
+                            <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-base`}>+ Yeni Arıza Bildir</Text>
                         </TouchableOpacity>
                     </View>
 
-                    <View className="gap-3 mb-8">
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Başlığı *</Text>
-                            <TextInput value={createForm.title} onChangeText={t => setCreateForm({ ...createForm, title: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="Arıza Başlığı" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Açıklama *</Text>
-                            <TextInput value={createForm.description} onChangeText={t => setCreateForm({ ...createForm, description: t })} multiline className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" placeholder="Arıza Açıklaması" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
+                    {loading && !refreshing ? (
+                        <Text className="text-gray-500">Geçmiş yükleniyor...</Text>
+                    ) : (
+                        <>
+                            {filteredHistory.map((fault) => (
+                                <TouchableOpacity key={fault.id} onPress={() => openDetails(fault)}>
+                                    <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg shadow-sm border mb-3`}>
+                                        <View className="flex-row justify-between items-start">
+                                            <Text className={`font-bold text-lg flex-1 mr-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{fault.title}</Text>
+                                            <View className={`px-2 py-1 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                                <Text className={`text-xs font-bold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>KAPALI</Text>
+                                            </View>
+                                        </View>
 
-                        <View>
-                            <Text className={`font-bold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Fotoğraflar</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                                {images.map((uri, index) => (
-                                    <View key={index} className="relative">
-                                        <Image source={{ uri }} className="w-20 h-20 rounded-lg bg-gray-200" />
-                                        <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
-                                            <Text className="text-white font-bold">X</Text>
-                                        </TouchableOpacity>
+                                        <Text className="text-gray-600 mt-1 mb-2" numberOfLines={2}>{fault.description}</Text>
+
+                                        <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-100">
+                                            <Text className="text-gray-400 text-xs">Tarih: {fault.faultDate || '-'}</Text>
+                                            <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs font-bold`}>Detayları Gör →</Text>
+                                        </View>
                                     </View>
-                                ))}
-                                <TouchableOpacity onPress={pickImage} className={`w-20 h-20 rounded-lg items-center justify-center border-2 border-dashed ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
-                                    <Text className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>+</Text>
                                 </TouchableOpacity>
-                            </ScrollView>
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Şeflik *</Text>
-                            {user?.role === 'worker' && (user as any).chiefdomId ? (
-                                <View className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
-                                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                                        {chiefdoms.find(c => c.id.toString() === (user as any).chiefdomId.toString())?.name || 'Yükleniyor...'}
+                            ))}
+                            {filteredHistory.length === 0 && (
+                                <View className="items-center justify-center py-10">
+                                    <Text className="text-gray-400 text-lg">
+                                        {searchQuery ? 'Arama sonucu bulunamadı.' : 'Kapatılmış arıza bulunamadı.'}
                                     </Text>
                                 </View>
-                            ) : (
-                                <View className="flex-row flex-wrap gap-2">
-                                    {chiefdoms.map(c => (
-                                        <TouchableOpacity
-                                            key={c.id}
-                                            onPress={() => setCreateForm({ ...createForm, chiefdomId: c.id.toString() })}
-                                            className={`px-3 py-2 rounded border ${createForm.chiefdomId === c.id.toString() ? 'bg-blue-600 border-blue-600' : isDark ? 'bg-dark-card border-gray-700' : 'bg-white border-gray-200'}`}
-                                        >
-                                            <Text className={`${createForm.chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'}`}>{c.name}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
                             )}
-                        </View>
-
-                        <Text className={`text-lg font-bold mt-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Kapanış Detayları</Text>
-
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Tarihi</Text>
-                            <TextInput value={createForm.faultDate} onChangeText={t => setCreateForm({ ...createForm, faultDate: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="GG.AA.YYYY" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Saati</Text>
-                            <TextInput value={createForm.faultTime} onChangeText={t => setCreateForm({ ...createForm, faultTime: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholder="SS:DD" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Bildiren Kişi</Text>
-                            <TextInput value={createForm.reporterName} onChangeText={t => setCreateForm({ ...createForm, reporterName: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Hat Bilgisi</Text>
-                            <TextInput value={createForm.lineInfo} onChangeText={t => setCreateForm({ ...createForm, lineInfo: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Arıza Bilgisi</Text>
-                            <TextInput value={createForm.closureFaultInfo} onChangeText={t => setCreateForm({ ...createForm, closureFaultInfo: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Çözüm</Text>
-                            <TextInput value={createForm.solution} onChangeText={t => setCreateForm({ ...createForm, solution: t })} multiline className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Çalışan Personel</Text>
-                            <TextInput value={createForm.workingPersonnel} onChangeText={t => setCreateForm({ ...createForm, workingPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-                        <View>
-                            <Text className={`font-bold mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>TCDD Personeli</Text>
-                            <TextInput value={createForm.tcddPersonnel} onChangeText={t => setCreateForm({ ...createForm, tcddPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                        </View>
-
-                        <TouchableOpacity onPress={handleCreateClosedFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-lg items-center mt-4`}>
-                            <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Oluştur</Text>
-                        </TouchableOpacity>
-                    </View>
+                        </>
+                    )}
                 </ScrollView>
-
                 <CustomAlert
                     visible={alertConfig.visible}
                     title={alertConfig.title}
@@ -668,66 +759,7 @@ export default function HistoryScreen() {
                     onConfirm={alertConfig.onConfirm}
                 />
                 <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
-            </KeyboardAvoidingView >
-        );
-    }
-
-    return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-            <ScrollView
-                ref={ref}
-                className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ width: '100%' }}
-            >
-                <View className="mb-4 items-center">
-                    <Text className={`text-2xl font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-gray-800'}`}>Arıza Geçmişi</Text>
-                    <TouchableOpacity onPress={openCreateModal} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-6 py-3 rounded-lg shadow-md`}>
-                        <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-base`}>+ Yeni Arıza</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {loading && !refreshing ? (
-                    <Text className="text-gray-500">Geçmiş yükleniyor...</Text>
-                ) : (
-                    <>
-                        {history.map((fault) => (
-                            <TouchableOpacity key={fault.id} onPress={() => openDetails(fault)}>
-                                <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg shadow-sm border mb-3`}>
-                                    <View className="flex-row justify-between items-start">
-                                        <Text className={`font-bold text-lg flex-1 mr-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{fault.title}</Text>
-                                        <View className={`px-2 py-1 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                            <Text className={`text-xs font-bold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>KAPALI</Text>
-                                        </View>
-                                    </View>
-
-                                    <Text className="text-gray-600 mt-1 mb-2" numberOfLines={2}>{fault.description}</Text>
-
-                                    <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-100">
-                                        <Text className="text-gray-400 text-xs">Tarih: {fault.faultDate || '-'}</Text>
-                                        <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs font-bold`}>Detayları Gör →</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                        {history.length === 0 && (
-                            <View className="items-center justify-center py-10">
-                                <Text className="text-gray-400 text-lg">Kapatılmış arıza bulunamadı.</Text>
-                            </View>
-                        )}
-                    </>
-                )}
-            </ScrollView>
-            <CustomAlert
-                visible={alertConfig.visible}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                type={alertConfig.type}
-                onClose={closeAlert}
-                onConfirm={alertConfig.onConfirm}
-            />
-            <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+        </View>
     );
 }
