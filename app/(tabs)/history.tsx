@@ -414,9 +414,9 @@ export default function HistoryScreen() {
                 <RailGuardHeader user={user} title="Arıza Detayı" showSearch={false} showGreeting={false} />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
                     <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
-                        <View className="flex-row justify-end mb-4">
-                            <TouchableOpacity onPress={() => setSelectedFault(null)} className="p-2">
-                                <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} font-bold`}>Kapat X</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 16 }}>
+                            <TouchableOpacity onPress={() => setSelectedFault(null)} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -551,12 +551,12 @@ export default function HistoryScreen() {
                                         <TouchableOpacity onPress={() => setIsEditing(false)} className="flex-1 bg-gray-200 p-3 rounded items-center"><Text className="text-gray-600 font-bold">İptal</Text></TouchableOpacity>
                                     </View>
                                 ) : (
-                                    <View className="flex-row gap-2">
-                                        <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-1 bg-blue-600 p-3 rounded items-center">
-                                            <Text className="text-white font-bold">Düzenle</Text>
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        <TouchableOpacity onPress={() => setIsEditing(true)} style={{ flex: 1, backgroundColor: '#1c4ed8', padding: 12, borderRadius: 8, alignItems: 'center' }}>
+                                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Düzenle</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} className="flex-1 bg-red-600 p-3 rounded items-center">
-                                            <Text className="text-white font-bold">Sil</Text>
+                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} style={{ flex: 1, backgroundColor: '#EF4444', padding: 12, borderRadius: 8, alignItems: 'center' }}>
+                                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Sil</Text>
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -585,8 +585,8 @@ export default function HistoryScreen() {
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
                     <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
                         <View className="flex-row justify-end mb-4">
-                            <TouchableOpacity onPress={() => setShowCreateModal(false)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-4 py-2 rounded-lg shadow-sm`}>
-                                <Text className="text-black font-bold">İptal Et</Text>
+                            <TouchableOpacity onPress={() => setShowCreateModal(false)} style={{ backgroundColor: '#EF4444', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
+                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>İptal Et</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -674,8 +674,8 @@ export default function HistoryScreen() {
                                 <TextInput value={createForm.tcddPersonnel} onChangeText={t => setCreateForm({ ...createForm, tcddPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
                             </View>
 
-                            <TouchableOpacity onPress={handleCreateClosedFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-lg items-center mt-4`}>
-                                <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Oluştur</Text>
+                            <TouchableOpacity onPress={handleCreateClosedFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 16 }}>
+                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Oluştur</Text>
                             </TouchableOpacity>
                         </View>
                     </ScrollView>
@@ -712,8 +712,8 @@ export default function HistoryScreen() {
                     contentContainerStyle={{ width: '100%', paddingBottom: 100, paddingTop: 20 }}
                 >
                     <View className="mb-4 items-center">
-                        <TouchableOpacity onPress={openCreateModal} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-6 py-3 rounded-lg shadow-md w-full items-center mb-4`}>
-                            <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-base`}>+ Yeni Arıza Bildir</Text>
+                        <TouchableOpacity onPress={openCreateModal} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, width: '100%', alignItems: 'center', marginBottom: 16 }}>
+                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>+ Yeni Arıza Bildir</Text>
                         </TouchableOpacity>
                     </View>
 

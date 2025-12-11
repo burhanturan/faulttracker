@@ -2,7 +2,7 @@
 import { useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
-import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react-native';
+import { AlertTriangle, Building2, CheckCircle2, Clock, FolderOpen, MapPin, Users } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
@@ -324,231 +324,259 @@ function CTCDashboard() {
 
   if (view === 'history') {
     return (
-      <ScrollView
-        className="flex-1 bg-white px-4 py-6"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
-      >
-        <View className="gap-4">
-          <TouchableOpacity onPress={() => setView('all_faults')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-            <Text className="text-black font-bold">← Listeye Dön</Text>
-          </TouchableOpacity>
-          <Text className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Geçmişi</Text>
-          {history.map((fault) => (
-            <View key={fault.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
-              <View className="flex-row justify-between items-start">
-                <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{fault.title}</Text>
-                <View className={`px-2 py-1 rounded-full ${fault.status === 'open' ? 'bg-red-100' : 'bg-green-100'} `}>
-                  <Text className={`text-xs font-bold ${fault.status === 'open' ? 'text-red-800' : 'text-green-800'} `}>{fault.status.toUpperCase()}</Text>
+      <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+        <RailGuardHeader user={user} title="Arıza Geçmişi" showSearch={false} showGreeting={true} />
+        <ScrollView
+          className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} px-4 py-6`}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
+        >
+          <View className="gap-4">
+            <TouchableOpacity onPress={() => setView('all_faults')} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Listeye Dön</Text>
+            </TouchableOpacity>
+            <Text className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Geçmişi</Text>
+            {history.map((fault) => (
+              <View key={fault.id} className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
+                <View className="flex-row justify-between items-start">
+                  <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{fault.title}</Text>
+                  <View className={`px-2 py-1 rounded-full ${fault.status === 'open' ? 'bg-red-100' : 'bg-green-100'} `}>
+                    <Text className={`text-xs font-bold ${fault.status === 'open' ? 'text-red-800' : 'text-green-800'} `}>{fault.status.toUpperCase()}</Text>
+                  </View>
                 </View>
+                <Text className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>{fault.description}</Text>
+                <Text className="text-gray-400 text-xs mt-2">Atanan: {fault.chiefdom?.name || 'Atanmamış'}</Text>
+                <Text className="text-gray-400 text-xs">Tarih: {new Date(fault.createdAt).toLocaleDateString()}</Text>
               </View>
-              <Text className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>{fault.description}</Text>
-              <Text className="text-gray-400 text-xs mt-2">Atanan: {fault.chiefdom?.name || 'Atanmamış'}</Text>
-              <Text className="text-gray-400 text-xs">Tarih: {new Date(fault.createdAt).toLocaleDateString()}</Text>
-            </View>
-          ))}
-          {history.length === 0 && <Text className="text-gray-500 text-center mt-4">Henüz arıza bildirilmedi.</Text>}
-          <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
-          <LoadingOverlay visible={loading} message="İşlem yapılıyor..." />
-        </View>
-      </ScrollView>
+            ))}
+            {history.length === 0 && <Text className="text-gray-500 text-center mt-4">Henüz arıza bildirilmedi.</Text>}
+            <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+            <LoadingOverlay visible={loading} message="İşlem yapılıyor..." />
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
   if (view === 'all_faults') {
     if (closingFaultId) {
       return (
-        <ScrollView className="flex-1 bg-white px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
-          <View className="flex-1">
-            <View className="gap-4 pb-10">
-              <TouchableOpacity onPress={() => setClosingFaultId(null)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-                <Text className="text-black font-bold">← Listeye Dön</Text>
-              </TouchableOpacity>
-              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Kaydını Kapat</Text>
-
-              <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-xl shadow-sm border gap-3`}>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Tarihi</Text>
-                  <TextInput value={closureForm.faultDate} onChangeText={t => setClosureForm({ ...closureForm, faultDate: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="DD.MM.YYYY" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Saati</Text>
-                  <TextInput value={closureForm.faultTime} onChangeText={t => setClosureForm({ ...closureForm, faultTime: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="HH:MM" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arızayı Bildiren</Text>
-                  <TextInput value={closureForm.reporterName} onChangeText={t => setClosureForm({ ...closureForm, reporterName: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Hat Bilgisi</Text>
-                  <TextInput value={closureForm.lineInfo} onChangeText={t => setClosureForm({ ...closureForm, lineInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Bilgisi</Text>
-                  <TextInput value={closureForm.faultInfo} onChangeText={t => setClosureForm({ ...closureForm, faultInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Çözümü</Text>
-                  <TextInput value={closureForm.solution} onChangeText={t => setClosureForm({ ...closureForm, solution: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} placeholder="Yapılan işlemi açıklayınız..." placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Çalışan Personel</Text>
-                  <TextInput value={closureForm.personnel} onChangeText={t => setClosureForm({ ...closureForm, personnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
-                </View>
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Katılan TCDD Personeli</Text>
-                  <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
-                </View>
-
-                <View>
-                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                    {selectedImages.map((img, index) => (
-                      <View key={index} className="relative">
-                        <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
-                        <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
-                          <Text className="text-white font-bold text-xs">X</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                    <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
-                      <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
-                    </TouchableOpacity>
-                  </ScrollView>
-                  <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
-                </View>
-
-                <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
-                  <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+          <RailGuardHeader user={user} title="Arıza Kapat" showSearch={false} showGreeting={false} />
+          <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} px-4 py-6`} contentContainerStyle={{ paddingBottom: 40 }}>
+            <View className="flex-1">
+              <View className="gap-4 pb-10">
+                <TouchableOpacity onPress={() => setClosingFaultId(null)} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Listeye Dön</Text>
                 </TouchableOpacity>
+                <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Kaydını Kapat</Text>
+
+                <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-xl shadow-sm border gap-3`}>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Tarihi</Text>
+                    <TextInput value={closureForm.faultDate} onChangeText={t => setClosureForm({ ...closureForm, faultDate: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="DD.MM.YYYY" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Saati</Text>
+                    <TextInput value={closureForm.faultTime} onChangeText={t => setClosureForm({ ...closureForm, faultTime: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="HH:MM" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arızayı Bildiren</Text>
+                    <TextInput value={closureForm.reporterName} onChangeText={t => setClosureForm({ ...closureForm, reporterName: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Hat Bilgisi</Text>
+                    <TextInput value={closureForm.lineInfo} onChangeText={t => setClosureForm({ ...closureForm, lineInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Bilgisi</Text>
+                    <TextInput value={closureForm.faultInfo} onChangeText={t => setClosureForm({ ...closureForm, faultInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Çözümü</Text>
+                    <TextInput value={closureForm.solution} onChangeText={t => setClosureForm({ ...closureForm, solution: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} placeholder="Yapılan işlemi açıklayınız..." placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Çalışan Personel</Text>
+                    <TextInput value={closureForm.personnel} onChangeText={t => setClosureForm({ ...closureForm, personnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                  </View>
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Katılan TCDD Personeli</Text>
+                    <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                  </View>
+
+                  <View>
+                    <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                      {selectedImages.map((img, index) => (
+                        <View key={index} className="relative">
+                          <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
+                          <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
+                            <Text className="text-white font-bold text-xs">X</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
+                        <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
+                      </TouchableOpacity>
+                    </ScrollView>
+                    <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
+                  </View>
+
+                  <TouchableOpacity onPress={handleCloseFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 }}>
+                    <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Arızayı Kapat ve Kaydet</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+              <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+              <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
             </View>
-            <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
-            <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       );
     }
 
     return (
-      <ScrollView
-        className="flex-1 bg-white px-4 py-6"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
-      >
-        <View className="gap-4">
-          {/* Helper Action Buttons for Watchman */}
-          <View className="flex-row gap-3 mb-2">
-            <TouchableOpacity onPress={() => setView('report_fault')} className="flex-1 bg-yellow-400 p-3 rounded-lg items-center shadow-sm">
-              <Text className="text-black font-bold">+ Arıza Bildir</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => fetchHistory()} className="flex-1 bg-yellow-400 p-3 rounded-lg items-center shadow-sm">
-              <Text className="text-black font-bold">Geçmiş Arızalarım</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+        <RailGuardHeader user={user} title="CTC Paneli" showSearch={true} showGreeting={true} />
+        <ScrollView
+          className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} px-4 py-6`}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
+        >
+          <View className="gap-4">
+            {/* Helper Action Buttons for Watchman */}
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 8 }}>
+              <TouchableOpacity onPress={() => setView('report_fault')} style={{ flex: 1, backgroundColor: '#1c4ed8', padding: 12, borderRadius: 8, alignItems: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>+ Arıza Bildir</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => fetchHistory()} style={{ flex: 1, backgroundColor: '#16a34a', padding: 12, borderRadius: 8, alignItems: 'center' }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Geçmiş Arızalarım</Text>
+              </TouchableOpacity>
+            </View>
 
-          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Tüm Aktif Arızalar</Text>
+            <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Tüm Aktif Arızalar</Text>
 
-          {allFaults.map(f => (
-            <TouchableOpacity key={f.id} onPress={() => openClosureForm(f)}>
-              <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
-                <View className="flex-row justify-between items-start">
-                  <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{f.title}</Text>
-                  <View className={`px-2 py-1 rounded-full ${f.status === 'open' ? 'bg-red-100' : 'bg-green-100'} `}>
-                    <Text className={`text-xs font-bold ${f.status === 'open' ? 'text-red-800' : 'text-green-800'} `}>{f.status.toUpperCase()}</Text>
+            {allFaults.map(f => (
+              <TouchableOpacity key={f.id} onPress={() => openClosureForm(f)}>
+                <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
+                  <View className="flex-row justify-between items-start">
+                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{f.title}</Text>
+                    <View className={`px-2 py-1 rounded-full ${f.status === 'open' ? 'bg-red-100' : 'bg-green-100'} `}>
+                      <Text className={`text-xs font-bold ${f.status === 'open' ? 'text-red-800' : 'text-green-800'} `}>{f.status.toUpperCase()}</Text>
+                    </View>
                   </View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-1`}>{f.description}</Text>
+                  <Text className="text-gray-400 text-xs mt-2">Atanan: {f.chiefdom?.name || 'Atanmamış'}</Text>
+                  <Text className="text-gray-400 text-xs">Bildiren: {f.reportedBy?.fullName}</Text>
+                  <Text className="text-gray-400 text-xs">Tarih: {new Date(f.createdAt).toLocaleDateString()}</Text>
+                  <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs mt-2 font-bold`}>Kapatmak için dokunun &gt;</Text>
                 </View>
-                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-1`}>{f.description}</Text>
-                <Text className="text-gray-400 text-xs mt-2">Atanan: {f.chiefdom?.name || 'Atanmamış'}</Text>
-                <Text className="text-gray-400 text-xs">Bildiren: {f.reportedBy?.fullName}</Text>
-                <Text className="text-gray-400 text-xs">Tarih: {new Date(f.createdAt).toLocaleDateString()}</Text>
-                <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs mt-2 font-bold`}>Kapatmak için dokunun &gt;</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-          {allFaults.length === 0 && <Text className="text-gray-500 text-center mt-4">Aktif arıza yok.</Text>}
-          <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
-          <LoadingOverlay visible={loading} />
-        </View>
-      </ScrollView>
+              </TouchableOpacity>
+            ))}
+            {allFaults.length === 0 && <Text className="text-gray-500 text-center mt-4">Aktif arıza yok.</Text>}
+            <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+            <LoadingOverlay visible={loading} />
+          </View>
+        </ScrollView>
+      </View >
     );
   }
 
   if (view === 'report_fault') {
     return (
-      <ScrollView
-        className="flex-1 bg-white px-4 py-6"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
-      >
-        <View className="gap-6">
-          <TouchableOpacity onPress={() => setView('all_faults')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-            <Text className="text-black font-bold">← Listeye Dön</Text>
-          </TouchableOpacity>
+      <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+        <RailGuardHeader user={user} title="Arıza Bildir" showSearch={false} showGreeting={false} />
+        <ScrollView
+          className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} px-4 py-6`}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
+        >
+          <View className="gap-6">
+            <TouchableOpacity onPress={() => setView('all_faults')} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Listeye Dön</Text>
+            </TouchableOpacity>
 
-          <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
-            <Text className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Bildir</Text>
+            <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
+              <Text className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'} `}>Arıza Bildir</Text>
 
-            <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Arıza Başlığı</Text>
-            <TextInput
-              className={`border rounded-lg p-3 mb-4 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
-              placeholder="Örn. A İstasyonu Sinyal Arızası"
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              value={title}
-              onChangeText={setTitle}
-            />
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Arıza Başlığı</Text>
+              <TextInput
+                className={`border rounded-lg p-3 mb-4 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
+                placeholder="Örn. A İstasyonu Sinyal Arızası"
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                value={title}
+                onChangeText={setTitle}
+              />
 
-            <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Açıklama</Text>
-            <TextInput
-              className={`border rounded-lg p-3 mb-4 h-24 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
-              placeholder="Sorunu detaylıca açıklayınız..."
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              multiline
-              textAlignVertical="top"
-              value={description}
-              onChangeText={setDescription}
-            />
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Açıklama</Text>
+              <TextInput
+                className={`border rounded-lg p-3 mb-4 h-24 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
+                placeholder="Sorunu detaylıca açıklayınız..."
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                multiline
+                textAlignVertical="top"
+                value={description}
+                onChangeText={setDescription}
+              />
 
-            <View className="flex-row gap-2 mb-4">
-              <View className="flex-1">
-                <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Tarih</Text>
-                <TextInput
-                  className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
-                  value={faultDate}
-                  onChangeText={setFaultDate}
-                  placeholder="GG.AA.YYYY"
-                />
+              <View className="flex-row gap-2 mb-4">
+                <View className="flex-1">
+                  <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Tarih</Text>
+                  <TextInput
+                    className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
+                    value={faultDate}
+                    onChangeText={setFaultDate}
+                    placeholder="GG.AA.YYYY"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Saat</Text>
+                  <TextInput
+                    className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
+                    value={faultTime}
+                    onChangeText={setFaultTime}
+                    placeholder="SS:DD"
+                  />
+                </View>
               </View>
-              <View className="flex-1">
-                <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Saat</Text>
-                <TextInput
-                  className={`border rounded-lg p-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
-                  value={faultTime}
-                  onChangeText={setFaultTime}
-                  placeholder="SS:DD"
-                />
-              </View>
-            </View>
 
-            <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Bildirilen Personel</Text>
-            <TextInput
-              className={`border rounded-lg p-3 mb-4 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
-              placeholder="Personel Adı Soyadı"
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              value={reporterName}
-              onChangeText={setReporterName}
-            />
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Bildirilen Personel</Text>
+              <TextInput
+                className={`border rounded-lg p-3 mb-4 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'} `}
+                placeholder="Personel Adı Soyadı"
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                value={reporterName}
+                onChangeText={setReporterName}
+              />
 
-            <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Şefliğe Ata</Text>
-            <View className="mb-6">
-              {projects.map(p => {
-                const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
-                if (projectChiefdoms.length === 0) return null;
-                return (
-                  <View key={p.id} className="mb-3">
-                    <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} `}>{p.name}</Text>
+              <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>Şefliğe Ata</Text>
+              <View className="mb-6">
+                {projects.map(p => {
+                  const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
+                  if (projectChiefdoms.length === 0) return null;
+                  return (
+                    <View key={p.id} className="mb-3">
+                      <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} `}>{p.name}</Text>
+                      <View className="flex-row gap-2 flex-wrap">
+                        {projectChiefdoms.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                          <TouchableOpacity
+                            key={c.id}
+                            onPress={() => setChiefdomId(c.id.toString())}
+                            className={`px-4 py-2 rounded-full border ${chiefdomId === c.id.toString() ? 'bg-red-600 border-red-600' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300'} `}
+                          >
+                            <Text className={`${chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} `}>{c.name}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
+                {chiefdoms.filter(c => !c.projectId).length > 0 && (
+                  <View className="mb-3">
+                    <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} `}>Diğer</Text>
                     <View className="flex-row gap-2 flex-wrap">
-                      {projectChiefdoms.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                      {chiefdoms.filter(c => !c.projectId).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
                         <TouchableOpacity
                           key={c.id}
                           onPress={() => setChiefdomId(c.id.toString())}
@@ -559,38 +587,22 @@ function CTCDashboard() {
                       ))}
                     </View>
                   </View>
-                );
-              })}
-              {chiefdoms.filter(c => !c.projectId).length > 0 && (
-                <View className="mb-3">
-                  <Text className={`font-bold mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} `}>Diğer</Text>
-                  <View className="flex-row gap-2 flex-wrap">
-                    {chiefdoms.filter(c => !c.projectId).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
-                      <TouchableOpacity
-                        key={c.id}
-                        onPress={() => setChiefdomId(c.id.toString())}
-                        className={`px-4 py-2 rounded-full border ${chiefdomId === c.id.toString() ? 'bg-red-600 border-red-600' : isDark ? 'bg-dark-bg border-gray-700' : 'bg-white border-gray-300'} `}
-                      >
-                        <Text className={`${chiefdomId === c.id.toString() ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'} `}>{c.name}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
+                )}
+              </View>
 
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={loading}
-              className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center ${loading ? 'opacity-50' : ''} `}
-            >
-              <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Raporu Gönder</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSubmit}
+                disabled={loading}
+                style={{ backgroundColor: loading ? '#94A3B8' : '#1c4ed8', padding: 16, borderRadius: 12, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Raporu Gönder</Text>
+              </TouchableOpacity>
+            </View>
+            <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+            <LoadingOverlay visible={loading} message="Arıza bildiriliyor..." />
           </View>
-          <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
-          <LoadingOverlay visible={loading} message="Arıza bildiriliyor..." />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -1140,27 +1152,17 @@ function AdminDashboard() {
               contentContainerStyle={{ paddingHorizontal: 16 }}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
             >
-              {/* KPI Grid */}
               {/* Row 1: Açık Arızalar - Full Width */}
               <View className="mb-2">
-                <TouchableOpacity className="w-full" onPress={() => { setView('faults'); setFaultStatusFilter('open'); }}>
-                  <View
-                    style={{ backgroundColor: '#EFF3F8' }}
-                    className="rounded-2xl p-4 border border-gray-200 h-[160px] justify-between relative overflow-hidden shadow-sm"
-                  >
-                    <View style={{ backgroundColor: '#EF4444', opacity: 0.05 }} className="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl" />
-                    <View className="flex-row justify-between items-start">
-                      <View className="p-3 rounded-xl bg-white/80 border border-gray-200">
-                        <AlertTriangle size={28} color="#EF4444" />
-                      </View>
-                    </View>
-                    <View>
-                      <Text className="text-3xl font-bold text-gray-900 tracking-tight">{faults.filter(f => f.status === 'open').length}</Text>
-                      <Text className="text-gray-600 text-sm font-semibold mt-1" numberOfLines={1}>Açık Arızalar</Text>
-                      <Text className="text-gray-500 text-xs mt-0.5" numberOfLines={1}>Acil Müdahale</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                <StatCard
+                  title="Açık Arızalar"
+                  value={faults.filter(f => f.status === 'open').length}
+                  icon={AlertTriangle}
+                  color="#EF4444"
+                  subtitle="Acil Müdahale"
+                  fullWidth={true}
+                  onPress={() => { setView('faults'); setFaultStatusFilter('open'); }}
+                />
               </View>
 
               {/* Row 2: Çözülenler + İşlemde */}
@@ -1186,26 +1188,27 @@ function AdminDashboard() {
               <Text className="text-gray-900 text-xl font-bold mb-4">Hızlı Erişim</Text>
               <View className="flex-row flex-wrap justify-between gap-4">
                 <View className="w-[47%]">
-                  <QuickAction title="Bölgeler" value={regions.length.toString()} color="purple" onPress={() => setView('regions')} />
+                  <QuickAction title="Bölgeler" value={regions.length.toString()} color="purple" icon={MapPin} onPress={() => setView('regions')} />
                 </View>
                 <View className="w-[47%]">
-                  <QuickAction title="Projeler" value={projects.length.toString()} color="orange" onPress={() => setView('projects')} />
+                  <QuickAction title="Projeler" value={projects.length.toString()} color="orange" icon={FolderOpen} onPress={() => setView('projects')} />
                 </View>
                 <View className="w-[47%] mt-1">
-                  <QuickAction title="Şeflikler" value={chiefdoms.length.toString()} color="green" onPress={() => setView('chiefdoms')} />
+                  <QuickAction title="Şeflikler" value={chiefdoms.length.toString()} color="green" icon={Building2} onPress={() => setView('chiefdoms')} />
                 </View>
                 <View className="w-[47%] mt-1">
                   <QuickAction
                     title="Aktif Personel"
                     value={users.filter(u => u.role === 'worker' || u.role === 'maintenance').length.toString()}
                     color="blue"
+                    icon={Users}
                     onPress={() => setView('users')}
                   />
                 </View>
               </View>
 
               {/* Recent Activity */}
-              <Text className="text-white text-xl font-bold mb-4 mt-8">Son Etkileşimler</Text>
+              <Text style={{ color: '#1F2937', fontSize: 20, fontWeight: 'bold', marginBottom: 16, marginTop: 32 }}>Son Aktiviteler</Text>
               <View className="mb-20">
                 {allFaults.slice(0, 5).map((fault) => {
                   const timeAgo = (() => {
@@ -1236,6 +1239,18 @@ function AdminDashboard() {
                   const iconColor = fault.status === 'closed' ? 'text-green-600' : (fault.status === 'in_progress' ? 'text-yellow-600' : 'text-red-600');
                   const action = fault.status === 'closed' ? `arıza ${fault.title} tamamlandı` : `arıza ${fault.title} oluşturuldu`;
 
+                  // Navigation handler for activity items
+                  const handleActivityPress = () => {
+                    if (fault.status === 'closed') {
+                      // Navigate to history tab for closed faults
+                      navigation.navigate('history' as never);
+                    } else {
+                      // Navigate to open faults list for open/in_progress faults
+                      setFaultStatusFilter('open');
+                      setView('faults');
+                    }
+                  };
+
                   return (
                     <ActivityItem
                       key={fault.id}
@@ -1244,6 +1259,7 @@ function AdminDashboard() {
                       time={timeAgo}
                       icon={icon}
                       iconColor={iconColor}
+                      onPress={handleActivityPress}
                     />
                   );
                 })}
@@ -1259,6 +1275,80 @@ function AdminDashboard() {
 
     // Faults View
     if (view === 'faults') {
+      // Show Closure Form if closingFaultId is set
+      if (closingFaultId) {
+        return (
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+            <RailGuardHeader user={user} title="Arıza Kapat" />
+            <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+              <TouchableOpacity onPress={() => setClosingFaultId(null)} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Listeye Dön</Text>
+              </TouchableOpacity>
+              <Text className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Arıza Kaydını Kapat</Text>
+
+              <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-xl shadow-sm border gap-3`}>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Tarihi</Text>
+                  <TextInput value={closureForm.faultDate} onChangeText={t => setClosureForm({ ...closureForm, faultDate: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="DD.MM.YYYY" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Saati</Text>
+                  <TextInput value={closureForm.faultTime} onChangeText={t => setClosureForm({ ...closureForm, faultTime: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} placeholder="HH:MM" placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arızayı Bildiren</Text>
+                  <TextInput value={closureForm.reporterName} onChangeText={t => setClosureForm({ ...closureForm, reporterName: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Hat Bilgisi</Text>
+                  <TextInput value={closureForm.lineInfo} onChangeText={t => setClosureForm({ ...closureForm, lineInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Bilgisi</Text>
+                  <TextInput value={closureForm.faultInfo} onChangeText={t => setClosureForm({ ...closureForm, faultInfo: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Arıza Çözümü</Text>
+                  <TextInput value={closureForm.solution} onChangeText={t => setClosureForm({ ...closureForm, solution: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} multiline numberOfLines={3} placeholder="Yapılan işlemi açıklayınız..." placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Çalışan Personel</Text>
+                  <TextInput value={closureForm.personnel} onChangeText={t => setClosureForm({ ...closureForm, personnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                </View>
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-1`}>Katılan TCDD Personeli</Text>
+                  <TextInput value={closureForm.tcddPersonnel} onChangeText={t => setClosureForm({ ...closureForm, tcddPersonnel: t })} className={`${isDark ? 'bg-dark-bg text-white border-dark-card' : 'bg-gray-50 text-gray-800 border-gray-200'} p-3 rounded border`} />
+                </View>
+
+                <View>
+                  <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} font-bold mb-2`}>Fotoğraflar (İsteğe Bağlı, Max 5)</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
+                    {selectedImages.map((img, index) => (
+                      <View key={index} className="relative">
+                        <Image source={{ uri: img.uri }} className="w-20 h-20 rounded-lg" />
+                        <TouchableOpacity onPress={() => removeImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center z-10 shadow-sm">
+                          <Text className="text-white font-bold text-xs">X</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    <TouchableOpacity onPress={pickImages} className={`${isDark ? 'bg-dark-bg border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 rounded-lg items-center justify-center border border-dashed`}>
+                      <Text className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-2xl`}>+</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                  <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
+                </View>
+
+                <TouchableOpacity onPress={handleCloseFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Arızayı Kapat ve Kaydet</Text>
+                </TouchableOpacity>
+              </View>
+              <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={closeAlert} onConfirm={alertConfig.onConfirm} />
+              <LoadingOverlay visible={loading} message="Arıza kapatılıyor..." />
+            </ScrollView>
+          </View>
+        );
+      }
+
       const filteredByStatus = faultStatusFilter === 'all'
         ? allFaults
         : allFaults.filter(f => f.status === faultStatusFilter);
@@ -1273,8 +1363,8 @@ function AdminDashboard() {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} title={statusTitle} />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => { setView('overview'); setFaultStatusFilter('all'); }} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-              <Text className="text-black font-bold">← Geri</Text>
+            <TouchableOpacity onPress={() => { setView('overview'); setFaultStatusFilter('all'); }} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
             </TouchableOpacity>
 
             {filteredByStatus.length === 0 ? (
@@ -1315,9 +1405,9 @@ function AdminDashboard() {
                   {f.status === 'open' && (
                     <TouchableOpacity
                       onPress={() => openClosureForm(f)}
-                      className="mt-3 bg-blue-500 py-2 rounded-lg items-center"
+                      style={{ marginTop: 12, backgroundColor: '#1c4ed8', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
                     >
-                      <Text className="text-white font-bold">Kapat</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Kapat</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1334,13 +1424,15 @@ function AdminDashboard() {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} title="Kullanıcılar" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-              <Text className="text-black font-bold">← Geri</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setView('create_user')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mb-4 shadow-sm`}>
-              <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>+ Yeni Kullanıcı Oluştur</Text>
-            </TouchableOpacity>
+            {/* Unified Button Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setView('create_user')} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>+ Kullanıcı Ekle</Text>
+              </TouchableOpacity>
+            </View>
 
             <Text className={`text-xl font-bold mt-4 ${isDark ? 'text-white' : 'text-gray-800'} `}>Mevcut Kullanıcılar</Text>
             {users.map(u => (
@@ -1482,12 +1574,13 @@ function AdminDashboard() {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} title="Projeler" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-              <Text className="text-black font-bold">← Geri</Text>
-            </TouchableOpacity>
-            <View className="flex-row justify-between items-center mb-4">
-              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} className="bg-green-600 px-4 py-2 rounded-lg">
-                <Text className="text-white font-bold">{showCreateProject ? 'Kapat' : '+ Proje Ekle'}</Text>
+            {/* Unified Button Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateProject ? 'Kapat' : '+ Proje Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1575,12 +1668,13 @@ function AdminDashboard() {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} title="Bölgeler" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-              <Text className="text-black font-bold">← Geri</Text>
-            </TouchableOpacity>
-            <View className="flex-row justify-between items-center mb-4">
-              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} className="bg-green-600 px-4 py-2 rounded-lg">
-                <Text className="text-white font-bold">{showCreateRegion ? 'Kapat' : '+ Bölge Ekle'}</Text>
+            {/* Unified Button Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateRegion ? 'Kapat' : '+ Bölge Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1695,14 +1789,13 @@ function AdminDashboard() {
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
           <RailGuardHeader user={user} title="Şeflikler" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity onPress={() => setView('overview')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
-              <Text className="text-black font-bold">← Geri</Text>
-            </TouchableOpacity>
-
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Şeflikleri Yönet</Text>
-              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} className="bg-green-600 px-4 py-2 rounded-lg">
-                <Text className="text-white font-bold">{showCreateChiefdom ? 'Kapat' : '+ Şeflik Ekle'}</Text>
+            {/* Unified Button Row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} style={{ backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{showCreateChiefdom ? 'Kapat' : '+ Şeflik Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1869,8 +1962,8 @@ function AdminDashboard() {
                   <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
                 </View>
 
-                <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
-                  <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
+                <TouchableOpacity onPress={handleCloseFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Arızayı Kapat ve Kaydet</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1959,7 +2052,9 @@ function AdminDashboard() {
 }
 
 
+
 function EngineerDashboard() {
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -1967,15 +2062,19 @@ function EngineerDashboard() {
   }, []);
 
   return (
-    <ScrollView
-      className="flex-1 bg-white px-4 py-6"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1c4ed8" colors={["#1c4ed8"]} />}
-    >
-      <View className="gap-4">
-        <DashboardCard title="Atanan Görevler" value="3" color="bg-orange-100 text-orange-800" />
-        <ActionButtons actions={['Görevlerimi Görüntüle', 'Durum Güncelle', 'Geçmiş']} />
-      </View>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <RailGuardHeader user={user} title="Mühendis Paneli" showSearch={true} showGreeting={true} />
+      <ScrollView
+        className="flex-1 bg-white px-4 py-6"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1c4ed8" colors={["#1c4ed8"]} />}
+      >
+        <View className="gap-4">
+          <DashboardCard title="Atanan Görevler" value="3" color="bg-orange-100 text-orange-800" />
+          <ActionButtons actions={['Görevlerimi Görüntüle', 'Durum Güncelle', 'Geçmiş']} />
+        </View>
+      </ScrollView>
+    </View>
+
   );
 }
 
@@ -2196,8 +2295,8 @@ function WorkerDashboard() {
               <Text className="text-xs text-gray-400">{selectedImages.length} fotoğraf seçildi</Text>
             </View>
 
-            <TouchableOpacity onPress={handleCloseFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-xl items-center mt-4`}>
-              <Text className={`${isDark ? 'text-black' : 'text-black'} font-bold text-lg`}>Arızayı Kapat ve Kaydet</Text>
+            <TouchableOpacity onPress={handleCloseFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Arızayı Kapat ve Kaydet</Text>
             </TouchableOpacity>
 
           </View>
@@ -2207,49 +2306,31 @@ function WorkerDashboard() {
     );
   }
 
+
+  // Main Worker View
   return (
-    <ScrollView
-      className="flex-1 bg-white px-4 py-6"
-      contentContainerStyle={{ paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
-    >
-      <View className="gap-4">
-        {error && (
-          <View className="bg-red-100 p-4 rounded-lg mb-4">
-            <Text className="text-red-800 font-bold">Hata: {error}</Text>
-            <Text className="text-red-600 text-xs mt-1">Lütfen internet bağlantınızı ve sunucunun çalıştığını kontrol edin.</Text>
-          </View>
-        )}
-        <DashboardCard title="Şeflik Arızaları" value={faults.length.toString()} color={`${isDark ? 'bg-dark-card text-dark-primary' : 'bg-light-card text-light-primary'} `} />
-
-        <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Şefliğimdeki Arızalar</Text>
-
-        {loading ? (
-          <Text className="text-gray-500">Arızalar yükleniyor...</Text>
-        ) : (
-          <>
-            {faults.map((fault) => (
-              <TouchableOpacity key={fault.id} onPress={() => openClosureForm(fault)} disabled={fault.status === 'closed'}>
-                <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg shadow-sm border mb-2 ${fault.status === 'closed' ? 'opacity-60' : ''} `}>
-                  <View className="flex-row justify-between items-start">
-                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'} `}>{fault.title}</Text>
-                    <View className={`px-2 py-1 rounded-full ${fault.status === 'open' ? 'bg-red-100' : 'bg-green-100'} `}>
-                      <Text className={`text-xs font-bold ${fault.status === 'open' ? 'text-red-800' : 'text-green-800'} `}>{fault.status.toUpperCase()}</Text>
-                    </View>
-                  </View>
-                  <Text className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'} `}>{fault.description}</Text>
-                  <Text className="text-gray-400 text-xs mt-2">Bildiren: {fault.reportedBy?.fullName || 'Bilinmiyor'}</Text>
-                  <Text className="text-gray-400 text-xs">Tarih: {new Date(fault.createdAt).toLocaleDateString()}</Text>
-                  {fault.status !== 'closed' && <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs mt-2 font-bold`}>Kapatmak için dokunun &gt;</Text>}
-                </View>
-              </TouchableOpacity>
-            ))}
-            {faults.length === 0 && <Text className="text-gray-500 text-center mt-4">Şefliğinize atanmış arıza yok.</Text>}
-          </>
-        )}
-        <LoadingOverlay visible={loading} />
-      </View>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
+      <RailGuardHeader user={user} title="Personel Paneli" showSearch={true} showGreeting={true} />
+      <ScrollView
+        className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} px-4 py-6`}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={isDark ? "#fff" : "#1c4ed8"} colors={[isDark ? "#fff" : "#1c4ed8"]} />}
+      >
+        <View className="gap-4">
+          <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} `}>Atanan Arızalar</Text>
+          {faults.map(f => (
+            <TouchableOpacity key={f.id} onPress={() => openClosureForm(f)}>
+              <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-white border-gray-100'} p-4 rounded-lg shadow-sm border mb-2`}>
+                <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-gray-800'}`}>{f.title}</Text>
+                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mt-1`}>{f.description}</Text>
+                <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs mt-2 font-bold`}>Kapatmak için dokunun &gt;</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          {faults.length === 0 && <LoadingOverlay visible={loading} />}
+          {faults.length === 0 && !loading && <Text className="text-gray-500 text-center">Atanan arıza yok.</Text>}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 

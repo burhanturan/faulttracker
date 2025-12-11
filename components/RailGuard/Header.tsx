@@ -34,7 +34,7 @@ export const RailGuardHeader: React.FC<HeaderProps> = ({ user, onSearch, title, 
                 shadowRadius: 20,
                 elevation: 10,
                 zIndex: 50,
-                paddingTop: insets.top + (title === 'Profil' || title === 'Geçmiş' ? 15 : 30),
+                paddingTop: insets.top + 15,
                 paddingBottom: 24,
                 alignSelf: 'stretch',
             }}

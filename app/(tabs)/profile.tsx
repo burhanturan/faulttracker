@@ -130,9 +130,9 @@ export default function ProfileScreen() {
                                     <TouchableOpacity
                                         onPress={handleChangePassword}
                                         disabled={!newPassword || newPassword !== confirmPassword}
-                                        className={`flex-1 p-3 rounded-lg items-center ${(!newPassword || newPassword !== confirmPassword) ? (isDark ? 'bg-gray-700' : 'bg-gray-300') : (isDark ? 'bg-yellow-500' : 'bg-yellow-500')}`}
+                                        style={{ flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', backgroundColor: (!newPassword || newPassword !== confirmPassword) ? '#D1D5DB' : '#1c4ed8' }}
                                     >
-                                        <Text className={`font-bold ${(!newPassword || newPassword !== confirmPassword) ? 'text-gray-500' : 'text-black'}`}>Güncelle</Text>
+                                        <Text style={{ fontWeight: 'bold', color: (!newPassword || newPassword !== confirmPassword) ? '#9CA3AF' : '#FFFFFF' }}>Güncelle</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={handleCancelPasswordChange} className={`flex-1 p-3 rounded-lg items-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                                         <Text className={`${isDark ? 'text-gray-300' : 'text-gray-700'} font-bold`}>İptal</Text>

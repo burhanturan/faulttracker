@@ -5,9 +5,9 @@ export default {
   light: {
     text: '#374151', // Dark Gray
     background: '#FFFFFF', // light-bg
-    tint: '#EAB308', // light-primary
+    tint: '#1c4ed8', // Header Blue
     tabIconDefault: '#9CA3AF', // Gray 400
-    tabIconSelected: '#EAB308', // light-primary
+    tabIconSelected: '#1c4ed8', // Header Blue
     headerBackground: '#F3F4F6', // Light Gray
     tabBarBackground: '#F3F4F6', // Light Gray
     headerText: '#374151', // Dark Gray
