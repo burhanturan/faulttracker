@@ -2,7 +2,7 @@
 import { useScrollToTop } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation } from 'expo-router';
-import { AlertTriangle, Briefcase, Building2, CheckCircle2, ChevronRight, Clock, Edit2, FolderOpen, Mail, MapPin, Phone, Plus, Trash2, Users } from 'lucide-react-native';
+import { AlertTriangle, Briefcase, Building2, CheckCircle2, ChevronRight, Clock, Edit2, FolderOpen, MapPin, Plus, Trash2, Users } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
@@ -635,7 +635,7 @@ function AdminDashboard() {
   const [projects, setProjects] = useState<any[]>([]);
   const [regions, setRegions] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user' | 'projects' | 'regions'>('overview');
+  const [view, setView] = useState<'overview' | 'users' | 'chiefdoms' | 'faults' | 'create_user' | 'edit_user' | 'projects' | 'regions'>('overview');
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -671,11 +671,11 @@ function AdminDashboard() {
   }, [searchQuery, masterFaultList]);
 
   // Custom Alert State
-  const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' | 'loading', onConfirm?: () => void }>({
     visible: false, title: '', message: '', type: 'info'
   });
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' | 'loading' = 'info', onConfirm?: () => void) => {
     setAlertConfig({ visible: true, title, message, type, onConfirm });
   };
 
@@ -788,8 +788,8 @@ function AdminDashboard() {
       ]);
       // Filter for active faults only
       setFaults(faultsData.filter((f: any) => f.status === 'open'));
-      // Store all faults sorted by date (newest first) for activity feed
-      setAllFaults(faultsData.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      // Store all faults sorted by updatedAt (newest activity first) for activity feed
+      setAllFaults(faultsData.sort((a: any, b: any) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()));
       // Store ALL data for SEARCH (Open + Closed)
       setMasterFaultList(faultsData);
       setChiefdoms(chiefdomsData);
@@ -907,16 +907,22 @@ function AdminDashboard() {
       return;
     }
 
-    setLoading(true);
+    showAlert('Kullanıcı Oluşturuluyor', 'Lütfen bekleyiniz...', 'loading');
+    const startTime = Date.now();
     try {
       await api.post('/users', { ...createUserForm });
-      showAlert('Başarılı', 'Kullanıcı başarıyla oluşturuldu!', 'success');
-      setCreateUserForm({ username: '', password: '', fullName: '', role: 'worker', chiefdomId: '', email: '', phone: '+90' });
-      fetchData();
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.max(500 - elapsed, 0);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      closeAlert();
+      setTimeout(() => {
+        showAlert('Başarılı', 'Kullanıcı başarıyla oluşturuldu!', 'success');
+        setCreateUserForm({ username: '', password: '', fullName: '', role: 'worker', chiefdomId: '', email: '', phone: '+90' });
+        fetchData();
+      }, 400);
     } catch (error) {
-      showAlert('Hata', 'Kullanıcı oluşturulamadı', 'error');
-    } finally {
-      setLoading(false);
+      closeAlert();
+      setTimeout(() => showAlert('Hata', 'Kullanıcı oluşturulamadı', 'error'), 400);
     }
   };
 
@@ -925,21 +931,27 @@ function AdminDashboard() {
       showAlert('Hata', 'Proje adı boş olamaz', 'error');
       return;
     }
-    setLoading(true);
+    showAlert('Proje Oluşturuluyor', 'Lütfen bekleyiniz...', 'loading');
+    const startTime = Date.now();
     try {
       await api.post('/projects', {
         name: newProjectName,
         description: newProjectDesc,
         regionId: selectedRegionIdForProject || undefined
       });
-      showAlert('Başarılı', 'Proje oluşturuldu', 'success');
-      setNewProjectName('');
-      setNewProjectDesc('');
-      fetchData();
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.max(500 - elapsed, 0);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      closeAlert();
+      setTimeout(() => {
+        showAlert('Başarılı', 'Proje oluşturuldu', 'success');
+        setNewProjectName('');
+        setNewProjectDesc('');
+        fetchData();
+      }, 400);
     } catch (error) {
-      showAlert('Hata', 'Proje oluşturulamadı', 'error');
-    } finally {
-      setLoading(false);
+      closeAlert();
+      setTimeout(() => showAlert('Hata', 'Proje oluşturulamadı', 'error'), 400);
     }
   };
 
@@ -948,17 +960,23 @@ function AdminDashboard() {
       showAlert('Hata', 'Bölge adı boş olamaz', 'error');
       return;
     }
-    setLoading(true);
+    showAlert('Bölge Oluşturuluyor', 'Lütfen bekleyiniz...', 'loading');
+    const startTime = Date.now();
     try {
       await api.post('/regions', { name: newRegionName, description: newRegionDesc });
-      showAlert('Başarılı', 'Bölge oluşturuldu', 'success');
-      setNewRegionName('');
-      setNewRegionDesc('');
-      fetchData();
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.max(500 - elapsed, 0);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      closeAlert();
+      setTimeout(() => {
+        showAlert('Başarılı', 'Bölge oluşturuldu', 'success');
+        setNewRegionName('');
+        setNewRegionDesc('');
+        fetchData();
+      }, 400);
     } catch (error) {
-      showAlert('Hata', 'Bölge oluşturulamadı', 'error');
-    } finally {
-      setLoading(false);
+      closeAlert();
+      setTimeout(() => showAlert('Hata', 'Bölge oluşturulamadı', 'error'), 400);
     }
   };
 
@@ -985,64 +1003,89 @@ function AdminDashboard() {
       return;
     }
 
-    setLoading(true);
+    showAlert('Kullanıcı Güncelleniyor', 'Lütfen bekleyiniz...', 'loading');
+    const startTime = Date.now();
     try {
       // Only send password if it's not empty (meaning user wants to change it)
       const updateData: any = { ...editUserForm };
       if (!updateData.password) delete updateData.password;
 
-      await api.put(`/users/ ${editUserForm.id} `, updateData);
-      showAlert('Başarılı', 'Kullanıcı başarıyla güncellendi', 'success');
-      setEditingUserId(null);
-      fetchData();
+      await api.put(`/users/${editUserForm.id}`, updateData);
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.max(500 - elapsed, 0);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      closeAlert();
+      setTimeout(() => {
+        showAlert('Başarılı', 'Kullanıcı başarıyla güncellendi', 'success');
+        setEditingUserId(null);
+        setView('users');
+        fetchData();
+      }, 400);
     } catch (error) {
-      showAlert('Hata', 'Kullanıcı güncellenemedi', 'error');
-    } finally {
-      setLoading(false);
+      closeAlert();
+      setTimeout(() => showAlert('Hata', 'Kullanıcı güncellenemedi', 'error'), 400);
     }
   };
 
   const handleDeleteUser = (id: string) => {
     showAlert('Kullanıcıyı Sil', 'Bu kullanıcıyı silmek istediğinize emin misiniz?', 'confirm', async () => {
-      setLoading(true);
+      showAlert('Kullanıcı Siliniyor', 'Lütfen bekleyiniz...', 'loading');
+      const startTime = Date.now();
       try {
-        await api.delete(`/users/ ${id} `);
-        showAlert('Başarılı', 'Kullanıcı silindi', 'success');
-        fetchData();
+        await api.delete(`/users/${id}`);
+        const elapsed = Date.now() - startTime;
+        const waitTime = Math.max(500 - elapsed, 0);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        closeAlert();
+        setTimeout(() => {
+          showAlert('Başarılı', 'Kullanıcı silindi', 'success');
+          fetchData();
+        }, 400);
       } catch (error) {
-        showAlert('Hata', 'Kullanıcı silinemedi', 'error');
-      } finally {
-        setLoading(false);
+        closeAlert();
+        setTimeout(() => showAlert('Hata', 'Kullanıcı silinemedi', 'error'), 400);
       }
     });
   };
 
   const handleDeleteRegion = (id: string) => {
     showAlert('Bölgeyi Sil', 'Bu bölgeyi silmek istediğinize emin misiniz?', 'confirm', async () => {
-      setLoading(true);
+      showAlert('Bölge Siliniyor', 'Lütfen bekleyiniz...', 'loading');
+      const startTime = Date.now();
       try {
-        await api.delete(`/regions/ ${id} `);
-        showAlert('Başarılı', 'Bölge silindi', 'success');
-        fetchData();
+        await api.delete(`/regions/${id}`);
+        const elapsed = Date.now() - startTime;
+        const waitTime = Math.max(500 - elapsed, 0);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        closeAlert();
+        setTimeout(() => {
+          showAlert('Başarılı', 'Bölge silindi', 'success');
+          fetchData();
+        }, 400);
       } catch (error) {
-        showAlert('Hata', 'Bölge silinemedi (Bağlı projeler olabilir)', 'error');
-      } finally {
-        setLoading(false);
+        closeAlert();
+        setTimeout(() => showAlert('Hata', 'Bölge silinemedi (Bağlı projeler olabilir)', 'error'), 400);
       }
     });
   };
 
   const handleDeleteProject = (id: string) => {
     showAlert('Projeyi Sil', 'Bu projeyi silmek istediğinize emin misiniz?', 'confirm', async () => {
-      setLoading(true);
+      showAlert('Proje Siliniyor', 'Lütfen bekleyiniz...', 'loading');
+      const startTime = Date.now();
       try {
-        await api.delete(`/ projects / ${id} `);
-        showAlert('Başarılı', 'Proje silindi', 'success');
-        fetchData();
+        await api.delete(`/projects/${id}`);
+        const elapsed = Date.now() - startTime;
+        const waitTime = Math.max(500 - elapsed, 0);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        closeAlert();
+        setTimeout(() => {
+          showAlert('Başarılı', 'Proje silindi', 'success');
+          fetchData();
+        }, 400);
       } catch (error) {
-        showAlert('Hata', 'Proje silinemedi (Bağlı şeflikler olabilir)', 'error');
-      } finally {
-        setLoading(false);
+        closeAlert();
+        setTimeout(() => showAlert('Hata', 'Proje silinemedi (Bağlı şeflikler olabilir)', 'error'), 400);
       }
     });
   };
@@ -1059,6 +1102,7 @@ function AdminDashboard() {
       email: user.email || '',
       phone: user.phone || '+90'
     });
+    setView('edit_user');
   };
 
   const cancelEditing = () => {
@@ -1070,34 +1114,47 @@ function AdminDashboard() {
       showAlert('Hata', 'Şeflik adı boş olamaz', 'error');
       return;
     }
-    setLoading(true);
+    showAlert('Şeflik Oluşturuluyor', 'Lütfen bekleyiniz...', 'loading');
+    const startTime = Date.now();
     try {
       await api.post('/chiefdoms', {
         name: newChiefdom,
         projectId: selectedProjectId || undefined
       });
-      showAlert('Başarılı', 'Şeflik oluşturuldu', 'success');
-      setNewChiefdom('');
-      setSelectedProjectId('');
-      fetchData();
+      const elapsed = Date.now() - startTime;
+      const waitTime = Math.max(500 - elapsed, 0);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      closeAlert();
+      setShowCreateChiefdom(false);
+      setTimeout(() => {
+        showAlert('Başarılı', 'Şeflik oluşturuldu', 'success');
+        setNewChiefdom('');
+        setSelectedProjectId('');
+        fetchData();
+      }, 400);
     } catch (error) {
-      showAlert('Hata', 'Şeflik oluşturulamadı', 'error');
-    } finally {
-      setLoading(false);
+      closeAlert();
+      setTimeout(() => showAlert('Hata', 'Şeflik oluşturulamadı', 'error'), 400);
     }
   };
 
   const handleDeleteChiefdom = (id: string) => {
     showAlert('Şefliği Sil', 'Bu şefliği silmek istediğinize emin misiniz?', 'confirm', async () => {
-      setLoading(true);
+      showAlert('Şeflik Siliniyor', 'Lütfen bekleyiniz...', 'loading');
+      const startTime = Date.now();
       try {
-        await api.delete(`/ chiefdoms / ${id} `);
-        showAlert('Başarılı', 'Şeflik silindi', 'success');
-        fetchData();
+        await api.delete(`/chiefdoms/${id}`);
+        const elapsed = Date.now() - startTime;
+        const waitTime = Math.max(500 - elapsed, 0);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        closeAlert();
+        setTimeout(() => {
+          showAlert('Başarılı', 'Şeflik silindi', 'success');
+          fetchData();
+        }, 400);
       } catch (error) {
-        showAlert('Hata', 'Şeflik silinemedi', 'error');
-      } finally {
-        setLoading(false);
+        closeAlert();
+        setTimeout(() => showAlert('Hata', 'Şeflik silinemedi', 'error'), 400);
       }
     });
   };
@@ -1199,7 +1256,7 @@ function AdminDashboard() {
               </View>
 
               {/* Quick Navigation / Legacy Cards */}
-              <Text className="text-gray-900 text-xl font-bold mb-4">Hızlı Erişim</Text>
+              <Text style={{ color: isDark ? '#FFFFFF' : '#1F2937', fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Hızlı Erişim</Text>
               <View className="flex-row flex-wrap justify-between gap-4">
                 <View className="w-[47%]">
                   <QuickAction title="Bölgeler" value={regions.length.toString()} color="purple" icon={MapPin} onPress={() => setView('regions')} />
@@ -1222,13 +1279,14 @@ function AdminDashboard() {
               </View>
 
               {/* Recent Activity */}
-              <Text style={{ color: '#1F2937', fontSize: 20, fontWeight: 'bold', marginBottom: 16, marginTop: 32 }}>Son Aktiviteler</Text>
+              <Text style={{ color: isDark ? '#FFFFFF' : '#1F2937', fontSize: 20, fontWeight: 'bold', marginBottom: 16, marginTop: 32 }}>Son Aktiviteler</Text>
               <View className="mb-20">
                 {allFaults.slice(0, 5).map((fault) => {
                   const timeAgo = (() => {
                     const now = new Date();
-                    const created = new Date(fault.createdAt);
-                    const diffMs = now.getTime() - created.getTime();
+                    // Use updatedAt for activity time (shows when fault was last modified/closed)
+                    const activityDate = new Date(fault.updatedAt || fault.createdAt);
+                    const diffMs = now.getTime() - activityDate.getTime();
                     const diffMins = Math.floor(diffMs / 60000);
                     const diffHours = Math.floor(diffMs / 3600000);
                     const diffDays = Math.floor(diffMs / 86400000);
@@ -1292,9 +1350,9 @@ function AdminDashboard() {
       // Show Closure Form if closingFaultId is set
       if (closingFaultId) {
         return (
-          <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }}>
             <RailGuardHeader user={user} title="Arıza Kapat" />
-            <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <ScrollView style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#F9FAFB' }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}>
               <TouchableOpacity onPress={() => setClosingFaultId(null)} style={{ backgroundColor: '#1c4ed8', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, marginBottom: 16 }}>
                 <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Listeye Dön</Text>
               </TouchableOpacity>
@@ -1432,18 +1490,16 @@ function AdminDashboard() {
       );
     }
 
+
     // Users View
     if (view === 'users') {
       return (
-        <View style={{ flex: 1, backgroundColor: pageBg }}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }}>
           <RailGuardHeader user={user} title="Aktif Personel" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
-                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
-                </View>
-                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: buttonBg, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setView('create_user')} style={{ backgroundColor: buttonBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: buttonBg, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
                 <Plus size={18} color={buttonText} />
@@ -1451,81 +1507,31 @@ function AdminDashboard() {
               </TouchableOpacity>
             </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isDark ? 'white' : '#1F2937' }}>Personel Listesi</Text>
-              <View style={{ backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
-                <Text style={{ color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 'bold', fontSize: 12 }}>{users.length} Kişi</Text>
-              </View>
-            </View>
-
             {users.map(u => (
-              <View key={u.id} style={{ backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1, padding: 16, borderRadius: 20, marginBottom: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
-                {editingUserId === u.id.toString() ? (
-                  <View>
-                    <Text className={`font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Düzenleniyor: {u.username}</Text>
-                    <TextInput placeholder="Kullanıcı Adı" value={editUserForm.username} onChangeText={t => setEditUserForm({ ...editUserForm, username: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Ad Soyad" value={editUserForm.fullName} onChangeText={t => setEditUserForm({ ...editUserForm, fullName: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="E-posta" value={editUserForm.email} onChangeText={t => setEditUserForm({ ...editUserForm, email: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Telefon" value={editUserForm.phone} onChangeText={t => setEditUserForm({ ...editUserForm, phone: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-                    <TextInput placeholder="Yeni Şifre (boş bırakılabilir)" value={editUserForm.password} onChangeText={t => setEditUserForm({ ...editUserForm, password: t })} className={`p-3 rounded-xl border mb-3 ${isDark ? 'bg-dark-bg border-gray-700 text-white' : 'bg-gray-50 border-gray-200'} `} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
-
-                    <View className="flex-row gap-2 mt-2">
-                      <TouchableOpacity onPress={handleUpdateUser} className="flex-1 bg-green-500 py-3 rounded-xl items-center"><Text className="text-white font-bold">Kaydet</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={cancelEditing} className="flex-1 bg-gray-500 py-3 rounded-xl items-center"><Text className="text-white font-bold">İptal</Text></TouchableOpacity>
-                    </View>
+              <View key={u.id} style={{ backgroundColor: cardBg, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: borderColor }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: isDark ? 'white' : '#1F2937', fontSize: 16, fontWeight: 'bold' }}>{u.fullName}</Text>
+                    <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 13, marginTop: 4 }}>@{u.username}</Text>
+                    <Text style={{ color: isDark ? '#60A5FA' : '#2563EB', fontSize: 12, marginTop: 4, fontWeight: '600' }}>
+                      {roleLabels[u.role] || u.role}
+                    </Text>
+                    {u.chiefdom && (
+                      <Text style={{ color: isDark ? '#64748B' : '#9CA3AF', fontSize: 12, marginTop: 2 }}>Şeflik: {u.chiefdom.name}</Text>
+                    )}
                   </View>
-                ) : (
-                  <View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                      <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                        <Text style={{ fontSize: 20, fontWeight: '700', color: isDark ? '#94A3B8' : '#64748B' }}>{u.fullName.charAt(0).toUpperCase()}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 17, fontWeight: '700', color: isDark ? 'white' : '#111827', marginBottom: 2 }}>{u.fullName}</Text>
-                        <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontSize: 13 }}>@{u.username}</Text>
-                      </View>
-                      <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: isDark ? '#22D3EE15' : '#EFF6FF', borderWidth: 1, borderColor: isDark ? '#22D3EE30' : '#DBEAFE' }}>
-                        <Text style={{ color: isDark ? '#22D3EE' : '#2563EB', fontSize: 12, fontWeight: '700' }}>{roleLabels[u.role] || u.role}</Text>
-                      </View>
-                    </View>
-
-                    <View style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: isDark ? '#334155' : '#F1F5F9', marginBottom: 16 }}>
-                      {u.chiefdom && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <Building2 size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
-                          <Text style={{ color: isDark ? '#E2E8F0' : '#374151', fontSize: 14, fontWeight: '500' }}>{u.chiefdom.name}</Text>
-                        </View>
-                      )}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <Phone size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
-                        <Text style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: 14 }}>{u.phone || 'Telefon yok'}</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <Mail size={16} color={isDark ? '#64748B' : '#9CA3AF'} />
-                        <Text style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: 14 }}>{u.email || 'E-posta yok'}</Text>
-                      </View>
-                    </View>
-
-                    <View style={{ flexDirection: 'row', gap: 12 }}>
-                      <TouchableOpacity onPress={() => startEditing(u)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F3F4F6', gap: 8 }}>
-                        <Edit2 size={16} color={isDark ? '#E2E8F0' : '#4B5563'} />
-                        <Text style={{ color: isDark ? '#E2E8F0' : '#4B5563', fontWeight: 'bold', fontSize: 14 }}>Düzenle</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteUser(u.id)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, backgroundColor: isDark ? '#450a0a' : '#FEF2F2', gap: 8, borderWidth: 1, borderColor: isDark ? '#7f1d1d' : '#FEE2E2' }}>
-                        <Trash2 size={16} color="#EF4444" />
-                        <Text style={{ color: '#EF4444', fontWeight: 'bold', fontSize: 14 }}>Sil</Text>
-                      </TouchableOpacity>
-                    </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity onPress={() => startEditing(u)} style={{ backgroundColor: isDark ? '#334155' : '#E2E8F0', padding: 8, borderRadius: 8 }}>
+                      <Text style={{ color: isDark ? '#60A5FA' : '#2563EB', fontSize: 12, fontWeight: '600' }}>Düzenle</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteUser(u.id.toString())} style={{ backgroundColor: isDark ? '#7F1D1D' : '#FEE2E2', padding: 8, borderRadius: 8 }}>
+                      <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '600' }}>Sil</Text>
+                    </TouchableOpacity>
                   </View>
-                )}
+                </View>
               </View>
             ))}
-            {users.length === 0 && (
-              <View style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-                <Users size={64} color={isDark ? '#334155' : '#E2E8F0'} style={{ marginBottom: 16 }} />
-                <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 16 }}>Kayıtlı personel bulunamadı.</Text>
-              </View>
-            )}
+            {users.length === 0 && <Text style={{ color: '#6B7280', textAlign: 'center', marginTop: 20 }}>Kullanıcı bulunamadı.</Text>}
             <LoadingOverlay visible={loading} />
           </ScrollView>
         </View>
@@ -1534,7 +1540,7 @@ function AdminDashboard() {
 
     if (view === 'create_user') {
       return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
           <RailGuardHeader user={user} title="Yeni Kullanıcı Oluştur" />
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16 }}>
             <TouchableOpacity onPress={() => setView('users')} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
@@ -1602,6 +1608,134 @@ function AdminDashboard() {
       );
     }
 
+    if (view === 'edit_user') {
+      return (
+        <View style={{ flex: 1, backgroundColor: pageBg }}>
+          <RailGuardHeader user={user} title="Kullanıcı Düzenle" />
+          <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <TouchableOpacity onPress={() => { setView('users'); setEditingUserId(null); }} style={{ backgroundColor: buttonBg, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 16 }}>
+              <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
+            </TouchableOpacity>
+
+            <View style={{ backgroundColor: cardBg, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: borderColor }}>
+              <Text style={{ color: isDark ? 'white' : '#1F2937', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Kullanıcı Bilgilerini Düzenle</Text>
+
+              <TextInput
+                placeholder="Kullanıcı Adı"
+                value={editUserForm.username}
+                onChangeText={t => setEditUserForm({ ...editUserForm, username: t })}
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#E5E7EB', borderRadius: 12, padding: 12, marginBottom: 12, color: isDark ? 'white' : '#1F2937' }}
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+              />
+
+              <TextInput
+                placeholder="Ad Soyad"
+                value={editUserForm.fullName}
+                onChangeText={t => setEditUserForm({ ...editUserForm, fullName: t })}
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#E5E7EB', borderRadius: 12, padding: 12, marginBottom: 12, color: isDark ? 'white' : '#1F2937' }}
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+              />
+
+              <TextInput
+                placeholder="E-posta"
+                value={editUserForm.email}
+                onChangeText={t => setEditUserForm({ ...editUserForm, email: t })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#E5E7EB', borderRadius: 12, padding: 12, marginBottom: 12, color: isDark ? 'white' : '#1F2937' }}
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+              />
+
+              <TextInput
+                placeholder="Telefon (+90...)"
+                value={editUserForm.phone}
+                onChangeText={t => setEditUserForm({ ...editUserForm, phone: t })}
+                keyboardType="phone-pad"
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#E5E7EB', borderRadius: 12, padding: 12, marginBottom: 12, color: isDark ? 'white' : '#1F2937' }}
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+              />
+
+              <TextInput
+                placeholder="Yeni Şifre (Boş bırakılırsa değişmez)"
+                value={editUserForm.password}
+                onChangeText={t => setEditUserForm({ ...editUserForm, password: t })}
+                secureTextEntry
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#E5E7EB', borderRadius: 12, padding: 12, marginBottom: 16, color: isDark ? 'white' : '#1F2937' }}
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+              />
+
+              <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontWeight: 'bold', marginBottom: 8 }}>Rol</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                {availableRoles.map(r => (
+                  <TouchableOpacity
+                    key={r}
+                    onPress={() => setEditUserForm({ ...editUserForm, role: r, chiefdomId: '' })}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      backgroundColor: editUserForm.role === r ? buttonBg : 'transparent',
+                      borderColor: editUserForm.role === r ? buttonBg : (isDark ? '#4B5563' : '#D1D5DB')
+                    }}
+                  >
+                    <Text style={{ color: editUserForm.role === r ? buttonText : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: '600' }}>
+                      {roleLabels[r] || r}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {editUserForm.role === 'worker' && (
+                <>
+                  <Text style={{ color: isDark ? '#94A3B8' : '#6B7280', fontWeight: 'bold', marginBottom: 8 }}>Şeflik Ata</Text>
+                  <View style={{ marginBottom: 16 }}>
+                    {projects.map(p => {
+                      const projectChiefdoms = chiefdoms.filter(c => c.projectId === p.id);
+                      if (projectChiefdoms.length === 0) return null;
+                      return (
+                        <View key={p.id} style={{ marginBottom: 12 }}>
+                          <Text style={{ color: isDark ? '#64748B' : '#9CA3AF', fontWeight: 'bold', fontSize: 12, marginBottom: 4 }}>{p.name}</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                            {projectChiefdoms.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                              <TouchableOpacity
+                                key={c.id}
+                                onPress={() => setEditUserForm({ ...editUserForm, chiefdomId: c.id.toString() })}
+                                style={{
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 6,
+                                  borderRadius: 16,
+                                  borderWidth: 1,
+                                  backgroundColor: editUserForm.chiefdomId === c.id.toString() ? buttonBg : 'transparent',
+                                  borderColor: editUserForm.chiefdomId === c.id.toString() ? buttonBg : (isDark ? '#4B5563' : '#D1D5DB')
+                                }}
+                              >
+                                <Text style={{ color: editUserForm.chiefdomId === c.id.toString() ? buttonText : (isDark ? '#D1D5DB' : '#4B5563'), fontWeight: '600', fontSize: 13 }}>
+                                  {c.name}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+
+              <TouchableOpacity
+                onPress={handleUpdateUser}
+                style={{ backgroundColor: buttonBg, padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 8 }}
+              >
+                <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 16 }}>Değişiklikleri Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+            <LoadingOverlay visible={loading} />
+          </ScrollView>
+        </View>
+      );
+    }
+
     if (view === 'projects') {
       return (
         <View style={{ flex: 1, backgroundColor: pageBg }}>
@@ -1609,15 +1743,12 @@ function AdminDashboard() {
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
             {/* Header Actions */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
-                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
-                </View>
-                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: buttonBg, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} style={{ backgroundColor: showCreateProject ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
-                {showCreateProject ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateProject ? 'Kapat' : 'Proje Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateProject(!showCreateProject)} style={{ backgroundColor: showCreateProject ? (isDark ? '#334155' : '#94A3B8') : buttonBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateProject ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color={buttonText} />}
+                <Text style={{ color: buttonText, fontWeight: 'bold' }}>{showCreateProject ? 'Kapat' : 'Proje Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1731,15 +1862,12 @@ function AdminDashboard() {
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
             {/* Header Actions */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
-                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
-                </View>
-                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: buttonBg, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} style={{ backgroundColor: showCreateRegion ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
-                {showCreateRegion ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateRegion ? 'Kapat' : 'Bölge Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateRegion(!showCreateRegion)} style={{ backgroundColor: showCreateRegion ? (isDark ? '#334155' : '#94A3B8') : buttonBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateRegion ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color={buttonText} />}
+                <Text style={{ color: buttonText, fontWeight: 'bold' }}>{showCreateRegion ? 'Kapat' : 'Bölge Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1889,15 +2017,12 @@ function AdminDashboard() {
           <ScrollView className="flex-1 pt-4" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
             {/* Header Actions */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <TouchableOpacity onPress={() => setView('overview')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ backgroundColor: isDark ? '#1E293B' : '#E2E8F0', padding: 8, borderRadius: 10 }}>
-                  <ChevronRight size={20} color={isDark ? 'white' : '#1F2937'} style={{ transform: [{ rotate: '180deg' }] }} />
-                </View>
-                <Text style={{ color: isDark ? 'white' : '#1F2937', fontWeight: 'bold', fontSize: 16 }}>Geri</Text>
+              <TouchableOpacity onPress={() => setView('overview')} style={{ backgroundColor: buttonBg, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: buttonText, fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} style={{ backgroundColor: showCreateChiefdom ? (isDark ? '#334155' : '#94A3B8') : '#16a34a', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
-                {showCreateChiefdom ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color="white" />}
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>{showCreateChiefdom ? 'Kapat' : 'Şeflik Ekle'}</Text>
+              <TouchableOpacity onPress={() => setShowCreateChiefdom(!showCreateChiefdom)} style={{ backgroundColor: showCreateChiefdom ? (isDark ? '#334155' : '#94A3B8') : buttonBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2 }}>
+                {showCreateChiefdom ? <ChevronRight size={18} color="white" style={{ transform: [{ rotate: '90deg' }] }} /> : <Plus size={18} color={buttonText} />}
+                <Text style={{ color: buttonText, fontWeight: 'bold' }}>{showCreateChiefdom ? 'Kapat' : 'Şeflik Ekle'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1921,7 +2046,8 @@ function AdminDashboard() {
                   </TouchableOpacity>
                 </View>
               </View>
-            )}
+            )
+            }
 
             <View style={{ marginBottom: 20 }}>
               <Text style={{ fontWeight: 'bold', color: isDark ? '#94A3B8' : '#6B7280', marginBottom: 8 }}>Filtrele:</Text>
@@ -1989,28 +2115,30 @@ function AdminDashboard() {
               )
             }
             <LoadingOverlay visible={loading} />
-            {editChiefdomModalVisible && (
-              <EditChiefdomModal
-                visible={editChiefdomModalVisible}
-                onClose={() => setEditChiefdomModalVisible(false)}
-                chiefdom={selectedChiefdomForEdit}
-                regions={regions}
-                projects={projects}
-                onUpdate={() => {
-                  fetchData();
-                  setEditChiefdomModalVisible(false);
-                }}
-              />
-            )}
-          </ScrollView>
-        </View>
+            {
+              editChiefdomModalVisible && (
+                <EditChiefdomModal
+                  visible={editChiefdomModalVisible}
+                  onClose={() => setEditChiefdomModalVisible(false)}
+                  chiefdom={selectedChiefdomForEdit}
+                  regions={regions}
+                  projects={projects}
+                  onUpdate={() => {
+                    fetchData();
+                    setEditChiefdomModalVisible(false);
+                  }}
+                />
+              )
+            }
+          </ScrollView >
+        </View >
       );
     }
 
     if (view === 'faults') {
       if (closingFaultId) {
         return (
-          <View className="flex-1">
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }}>
             <View className="gap-4 pb-10">
               <TouchableOpacity onPress={() => setClosingFaultId(null)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
                 <Text className="text-black font-bold">← Listeye Dön</Text>
@@ -2343,7 +2471,7 @@ function WorkerDashboard() {
 
   if (closingFaultId) {
     return (
-      <ScrollView className="flex-1 bg-white px-4 py-6" contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 40 }}>
         <View className="gap-4 pb-10">
           <TouchableOpacity onPress={() => setClosingFaultId(null)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} self-start px-4 py-2 rounded-lg mb-4 shadow-sm`}>
             <Text className="text-black font-bold">← Arızalara Dön</Text>

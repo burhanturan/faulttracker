@@ -25,7 +25,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, co
     const borderColor = isDark ? '#334155' : '#E5E7EB';
     const valueColor = isDark ? '#FFFFFF' : '#1F2937';
     const titleColor = isDark ? '#94A3B8' : '#374151';
-    const subtitleColor = isDark ? '#64748B' : '#6B7280';
+    const subtitleColor = isDark ? '#94A3B8' : '#6B7280';
 
     return (
         <TouchableOpacity

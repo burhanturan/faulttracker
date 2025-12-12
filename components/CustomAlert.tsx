@@ -1,13 +1,13 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, InteractionManager, Modal, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
 interface CustomAlertProps {
     visible: boolean;
     title: string;
     message: string;
-    type?: 'success' | 'error' | 'info' | 'confirm';
+    type?: 'success' | 'error' | 'info' | 'confirm' | 'loading';
     onClose: () => void;
     onConfirm?: () => void;
 }
@@ -33,21 +33,39 @@ export default function CustomAlert({ visible, title, message, type = 'info', on
     } else if (type === 'confirm') {
         iconName = 'question-circle';
         iconColor = '#F59E0B'; // Orange
+    } else if (type === 'loading') {
+        iconColor = isDark ? '#22D3EE' : '#1c4ed8'; // Cyan/Blue
     }
+
+    const handleConfirm = () => {
+        onClose();
+        // Use InteractionManager to wait for animations to complete on iOS
+        InteractionManager.runAfterInteractions(() => {
+            setTimeout(() => {
+                if (onConfirm) {
+                    onConfirm();
+                }
+            }, 100);
+        });
+    };
 
     return (
         <Modal
             transparent
             animationType="fade"
             visible={visible}
-            onRequestClose={onClose}
+            onRequestClose={type === 'loading' ? undefined : onClose}
         >
             <View className="flex-1 justify-center items-center bg-black/50 px-4">
                 <View className={`w-full max-w-sm p-6 rounded-2xl shadow-xl ${isDark ? 'bg-[#1F2228]' : 'bg-white'}`}>
 
-                    {/* Icon */}
+                    {/* Icon or Loading Spinner */}
                     <View className="items-center mb-4">
-                        <FontAwesome name={iconName} size={48} color={iconColor} />
+                        {type === 'loading' ? (
+                            <ActivityIndicator size="large" color={iconColor} />
+                        ) : (
+                            <FontAwesome name={iconName} size={48} color={iconColor} />
+                        )}
                     </View>
 
                     {/* Title */}
@@ -60,8 +78,8 @@ export default function CustomAlert({ visible, title, message, type = 'info', on
                         {message}
                     </Text>
 
-                    {/* Buttons */}
-                    {type === 'confirm' ? (
+                    {/* Buttons - Not shown for loading type */}
+                    {type === 'loading' ? null : type === 'confirm' ? (
                         <View className="flex-row gap-3">
                             <TouchableOpacity
                                 onPress={onClose}
@@ -72,10 +90,7 @@ export default function CustomAlert({ visible, title, message, type = 'info', on
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={() => {
-                                    if (onConfirm) onConfirm();
-                                    onClose();
-                                }}
+                                onPress={handleConfirm}
                                 className="flex-1 py-3 rounded-xl items-center bg-red-600"
                             >
                                 <Text className="text-white font-bold text-lg">
@@ -87,7 +102,7 @@ export default function CustomAlert({ visible, title, message, type = 'info', on
                         <TouchableOpacity
                             onPress={onClose}
                             className={`w-full py-3 rounded-xl items-center`}
-                            style={{ backgroundColor: iconColor === '#EF4444' ? '#EF4444' : '#EAB308' }}
+                            style={{ backgroundColor: type === 'success' ? '#10B981' : (iconColor === '#EF4444' ? '#EF4444' : '#EAB308') }}
                         >
                             <Text className="text-white font-bold text-lg">
                                 Tamam

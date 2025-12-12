@@ -16,6 +16,32 @@ export default function LoginScreen() {
     const { actualTheme } = useTheme();
     const isDark = actualTheme === 'dark';
 
+    // Theme colors matching the app
+    const colors = {
+        // Background gradient
+        gradientStart: isDark ? '#0F172A' : '#F8FAFC',
+        gradientEnd: isDark ? '#1E293B' : '#E2E8F0',
+        // Card
+        cardBg: isDark ? '#1E293B' : '#FFFFFF',
+        cardBorder: isDark ? '#334155' : '#E2E8F0',
+        // Text
+        textPrimary: isDark ? '#FFFFFF' : '#1F2937',
+        textSecondary: isDark ? '#94A3B8' : '#6B7280',
+        textMuted: isDark ? '#64748B' : '#9CA3AF',
+        // Input
+        inputBg: isDark ? '#0F172A' : '#F3F4F6',
+        inputBorder: isDark ? '#334155' : '#E2E8F0',
+        inputIcon: isDark ? '#64748B' : '#9CA3AF',
+        inputPlaceholder: isDark ? '#475569' : '#9CA3AF',
+        // Button
+        buttonBg: isDark ? '#22D3EE' : '#1c4ed8',
+        buttonText: isDark ? '#0F172A' : '#FFFFFF',
+        // Accent
+        accent: isDark ? '#22D3EE' : '#1c4ed8',
+        // Checkbox
+        checkboxColor: isDark ? '#22D3EE' : '#1c4ed8',
+    };
+
     // Custom Alert State
     const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm', onConfirm?: () => void }>({
         visible: false, title: '', message: '', type: 'info'
@@ -45,7 +71,7 @@ export default function LoginScreen() {
     return (
         <View style={{ flex: 1 }}>
             <LinearGradient
-                colors={isDark ? ['#1E1E1E', '#121212'] : ['#F3F4F6', '#E5E7EB']}
+                colors={[colors.gradientStart, colors.gradientEnd]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
@@ -61,27 +87,54 @@ export default function LoginScreen() {
                             showsHorizontalScrollIndicator={false}
                         >
                             {/* Logo Section */}
-                            <View className="items-center mb-8">
-                                <View className="flex-row items-center mb-2">
-                                    <FontAwesome name="train" size={40} color={isDark ? "white" : "#1c4ed8"} style={{ marginRight: 10 }} />
-                                    <Text className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-800'} tracking-wider`}>FAULT<Text style={{ color: '#1c4ed8' }}>TRACKER</Text></Text>
+                            <View style={{ alignItems: 'center', marginBottom: 32 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                    <FontAwesome name="train" size={40} color={colors.accent} style={{ marginRight: 10 }} />
+                                    <Text style={{ fontSize: 32, fontWeight: 'bold', color: colors.textPrimary, letterSpacing: 2 }}>
+                                        FAULT<Text style={{ color: colors.accent }}>TRACKER</Text>
+                                    </Text>
                                 </View>
-                                <Text className={`${isDark ? 'text-gray-300' : 'text-gray-500'} text-sm tracking-widest uppercase`}>Demiryolu Bakım Sistemi</Text>
+                                <Text style={{ color: colors.textSecondary, fontSize: 12, letterSpacing: 3, textTransform: 'uppercase' }}>
+                                    Demiryolu Bakım Sistemi
+                                </Text>
                             </View>
 
                             {/* Login Card */}
-                            <View className={`${isDark ? 'bg-dark-card' : 'bg-white'} w-full rounded-lg p-8 shadow-2xl`}>
-                                <Text className={`text-2xl font-bold text-center mb-8 ${isDark ? 'text-white' : 'text-gray-800'}`}>Giriş Yap</Text>
+                            <View style={{
+                                backgroundColor: colors.cardBg,
+                                width: '100%',
+                                borderRadius: 16,
+                                padding: 32,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 10 },
+                                shadowOpacity: isDark ? 0.5 : 0.15,
+                                shadowRadius: 20,
+                                elevation: 10,
+                                borderWidth: 1,
+                                borderColor: colors.cardBorder,
+                            }}>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 32, color: colors.textPrimary }}>
+                                    Giriş Yap
+                                </Text>
 
                                 {/* Username Input */}
-                                <View className="mb-4">
-                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Kullanıcı Adı:</Text>
-                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-dark-bg' : 'bg-gray-100'}`}>
-                                        <FontAwesome name="user" size={18} color={isDark ? '#9CA3AF' : '#666'} />
+                                <View style={{ marginBottom: 16 }}>
+                                    <Text style={{ fontWeight: '600', marginBottom: 8, color: colors.textSecondary }}>Kullanıcı Adı:</Text>
+                                    <View style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        borderRadius: 12,
+                                        paddingHorizontal: 16,
+                                        height: 52,
+                                        backgroundColor: colors.inputBg,
+                                        borderWidth: 1,
+                                        borderColor: colors.inputBorder,
+                                    }}>
+                                        <FontAwesome name="user" size={18} color={colors.inputIcon} />
                                         <TextInput
-                                            className={`flex-1 ml-3 ${isDark ? 'text-white' : 'text-gray-800'}`}
+                                            style={{ flex: 1, marginLeft: 12, color: colors.textPrimary, fontSize: 16 }}
                                             placeholder="Kullanıcı Adı"
-                                            placeholderTextColor={isDark ? '#6B7280' : '#999'}
+                                            placeholderTextColor={colors.inputPlaceholder}
                                             value={username}
                                             onChangeText={setUsername}
                                             autoCapitalize="none"
@@ -90,14 +143,23 @@ export default function LoginScreen() {
                                 </View>
 
                                 {/* Password Input */}
-                                <View className="mb-4">
-                                    <Text className={`font-bold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Şifre:</Text>
-                                    <View className={`flex-row items-center rounded-md px-4 h-12 ${isDark ? 'bg-dark-bg' : 'bg-gray-100'}`}>
-                                        <FontAwesome name="lock" size={18} color={isDark ? '#9CA3AF' : '#666'} />
+                                <View style={{ marginBottom: 16 }}>
+                                    <Text style={{ fontWeight: '600', marginBottom: 8, color: colors.textSecondary }}>Şifre:</Text>
+                                    <View style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        borderRadius: 12,
+                                        paddingHorizontal: 16,
+                                        height: 52,
+                                        backgroundColor: colors.inputBg,
+                                        borderWidth: 1,
+                                        borderColor: colors.inputBorder,
+                                    }}>
+                                        <FontAwesome name="lock" size={18} color={colors.inputIcon} />
                                         <TextInput
-                                            className={`flex-1 ml-3 ${isDark ? 'text-white' : 'text-gray-800'}`}
+                                            style={{ flex: 1, marginLeft: 12, color: colors.textPrimary, fontSize: 16 }}
                                             placeholder="Şifre"
-                                            placeholderTextColor={isDark ? '#6B7280' : '#999'}
+                                            placeholderTextColor={colors.inputPlaceholder}
                                             value={password}
                                             onChangeText={setPassword}
                                             secureTextEntry
@@ -106,22 +168,35 @@ export default function LoginScreen() {
                                 </View>
 
                                 {/* Remember Me */}
-                                <View className="flex-row items-center mb-6">
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
                                     <Checkbox
                                         value={isChecked}
                                         onValueChange={setChecked}
-                                        color={isChecked ? (isDark ? '#B91C1C' : '#EAB308') : undefined}
-                                        style={{ borderRadius: 4 }}
+                                        color={isChecked ? colors.checkboxColor : undefined}
+                                        style={{ borderRadius: 4, width: 20, height: 20 }}
                                     />
-                                    <Text className={`ml-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Beni Hatırla</Text>
+                                    <Text style={{ marginLeft: 10, color: colors.textSecondary }}>Beni Hatırla</Text>
                                 </View>
 
                                 {/* Sign In Button */}
                                 <TouchableOpacity
-                                    style={{ backgroundColor: '#1c4ed8', height: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+                                    style={{
+                                        backgroundColor: colors.buttonBg,
+                                        height: 52,
+                                        borderRadius: 12,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        shadowColor: colors.buttonBg,
+                                        shadowOffset: { width: 0, height: 4 },
+                                        shadowOpacity: 0.3,
+                                        shadowRadius: 8,
+                                        elevation: 5,
+                                    }}
                                     onPress={handleLogin}
                                 >
-                                    <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, textTransform: 'uppercase', letterSpacing: 1 }}>Giriş Yap</Text>
+                                    <Text style={{ color: colors.buttonText, fontWeight: 'bold', fontSize: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                        Giriş Yap
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         </ScrollView>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../lib/api';
+import CustomAlert from './CustomAlert';
 
 type Props = {
     visible: boolean;
@@ -18,6 +19,24 @@ export default function EditChiefdomModal({ visible, onClose, chiefdom, regions,
 
     const [activeTab, setActiveTab] = useState<'general' | 'stations' | 'crossings' | 'buildings'>('general');
     const [loading, setLoading] = useState(false);
+
+    // Alert State
+    const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'loading' }>({
+        visible: false, title: '', message: '', type: 'info'
+    });
+
+    const showAlertModal = (title: string, message: string, type: 'success' | 'error' | 'info' | 'loading') => {
+        setAlertConfig({ visible: true, title, message, type });
+    };
+
+    const closeAlertModal = () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    };
+
+    const handleSuccessClose = () => {
+        closeAlertModal();
+        onUpdate();
+    };
 
     // Form States
     const [name, setName] = useState('');
@@ -53,7 +72,8 @@ export default function EditChiefdomModal({ visible, onClose, chiefdom, regions,
     }, [chiefdom, projects]);
 
     const handleSaveGeneral = async () => {
-        setLoading(true);
+        showAlertModal('Şeflik Güncelleniyor', 'Lütfen bekleyiniz...', 'loading');
+        const startTime = Date.now();
         try {
             await api.put(`/chiefdoms/${chiefdom.id}`, {
                 name,
@@ -61,12 +81,16 @@ export default function EditChiefdomModal({ visible, onClose, chiefdom, regions,
                 endKm,
                 projectId: selectedProjectId || undefined
             });
-            Alert.alert('Başarılı', 'Genel bilgiler güncellendi');
-            onUpdate();
+            const elapsed = Date.now() - startTime;
+            const waitTime = Math.max(500 - elapsed, 0);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            closeAlertModal();
+            setTimeout(() => {
+                showAlertModal('Başarılı', 'Genel bilgiler güncellendi', 'success');
+            }, 100);
         } catch (e) {
-            Alert.alert('Hata', 'Güncelleme başarısız');
-        } finally {
-            setLoading(false);
+            closeAlertModal();
+            setTimeout(() => showAlertModal('Hata', 'Güncelleme başarısız', 'error'), 100);
         }
     };
 
@@ -248,6 +272,13 @@ export default function EditChiefdomModal({ visible, onClose, chiefdom, regions,
                     </ScrollView>
                 </View>
             </View>
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={alertConfig.type === 'success' ? handleSuccessClose : closeAlertModal}
+            />
         </Modal>
     );
 }

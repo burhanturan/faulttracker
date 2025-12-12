@@ -103,15 +103,16 @@ export const RailGuardHeader: React.FC<HeaderProps> = ({ user, onSearch, title, 
                                 onPress={() => inputRef.current?.focus()}
                                 className="flex-1 flex-row items-center px-4"
                             >
-                                <Search size={22} color="#dbeafe" strokeWidth={2.5} style={{ opacity: 0.9 }} />
+                                <Search size={22} color={isDark ? '#64748B' : '#93C5FD'} strokeWidth={2.5} style={{ opacity: 0.8 }} />
                                 <TextInput
                                     ref={inputRef}
                                     placeholder="Arıza Ara..."
-                                    placeholderTextColor="#dbeafe"
+                                    placeholderTextColor={isDark ? '#475569' : 'rgba(255, 255, 255, 0.5)'}
                                     className="flex-1 ml-3 text-white font-medium text-lg leading-none"
                                     style={{ paddingVertical: 0, textAlignVertical: 'center' }}
                                     onChangeText={onSearch}
-                                    cursorColor="#FFFFFF"
+                                    cursorColor={isDark ? '#22D3EE' : '#FFFFFF'}
+                                    selectionColor={isDark ? '#22D3EE' : '#93C5FD'}
                                     autoCorrect={false}
                                 />
                             </Pressable>

@@ -235,6 +235,9 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].tabBarBackground,
           borderTopColor: colorScheme === 'dark' ? '#374151' : '#E5E7EB',
+          height: 70,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
         headerStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].headerBackground,
