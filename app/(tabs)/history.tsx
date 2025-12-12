@@ -1,7 +1,9 @@
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
+import { Building2, Calendar, CheckCircle2, Clock, FileX2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CustomAlert from '../../components/CustomAlert';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { RailGuardHeader } from '../../components/RailGuard/Header';
@@ -64,6 +66,8 @@ export default function HistoryScreen() {
         images: [] as any[],
         newImages: [] as string[]
     });
+    // Full-screen image preview state
+    const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
     // Create Closed Fault State
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createForm, setCreateForm] = useState({
@@ -131,9 +135,8 @@ export default function HistoryScreen() {
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.3,
+            allowsEditing: false,
+            quality: 0.7,
         });
 
         if (!result.canceled) {
@@ -305,9 +308,8 @@ export default function HistoryScreen() {
     const pickNewImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.5,
+            allowsEditing: false,
+            quality: 0.7,
         });
 
         if (!result.canceled) {
@@ -416,152 +418,344 @@ export default function HistoryScreen() {
                 <RailGuardHeader user={user} title="Arıza Detayları" showSearch={false} showGreeting={false} />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
                     <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <TouchableOpacity onPress={() => setSelectedFault(null)} style={{ backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }}>
-                                <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
-                            </TouchableOpacity>
+                        {/* Hero Section - Title & Description */}
+                        <View style={{
+                            backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                            borderRadius: 20,
+                            marginBottom: 16,
+                            padding: 20,
+                            shadowColor: isDark ? '#000' : '#64748B',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: isDark ? 0.3 : 0.1,
+                            shadowRadius: 12,
+                            elevation: 5,
+                            borderLeftWidth: 4,
+                            borderLeftColor: isDark ? '#22D3EE' : '#3B82F6',
+                        }}>
+                            {/* Chiefdom Badge */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                                <View style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 6,
+                                    borderRadius: 20,
+                                }}>
+                                    <Building2 size={14} color={isDark ? '#22D3EE' : '#3B82F6'} />
+                                    <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#22D3EE' : '#3B82F6' }}>
+                                        {selectedFault.chiefdom?.name || 'Şeflik Belirtilmemiş'}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <Text style={{ fontSize: 22, fontWeight: '700', color: isDark ? '#F1F5F9' : '#1E293B', marginBottom: 10 }}>
+                                {selectedFault.title}
+                            </Text>
+                            <Text style={{ fontSize: 15, color: isDark ? '#94A3B8' : '#64748B', lineHeight: 22 }}>
+                                {selectedFault.description}
+                            </Text>
                         </View>
 
-                        <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-xl border mb-4`}>
-                            <Text className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.title}</Text>
-                            <Text className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{selectedFault.description}</Text>
-
-                            <View className="gap-3">
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Arıza Tarihi</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.faultDate} onChangeText={t => setEditForm({ ...editForm, faultDate: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultDate || '-'}</Text>
-                                    )}
+                        {/* Date & Time Row - 2 Column Grid */}
+                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                            <View style={{
+                                flex: 1,
+                                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                                borderRadius: 16,
+                                padding: 16,
+                                shadowColor: isDark ? '#000' : '#64748B',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 8,
+                                elevation: 3,
+                            }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                    <Calendar size={16} color={isDark ? '#22D3EE' : '#3B82F6'} />
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Arıza Tarihi</Text>
                                 </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Arıza Saati</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.faultTime} onChangeText={t => setEditForm({ ...editForm, faultTime: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.faultTime || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Bildiren Kişi</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.reporterName} onChangeText={t => setEditForm({ ...editForm, reporterName: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.reporterName || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Hat Bilgisi</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.lineInfo} onChangeText={t => setEditForm({ ...editForm, lineInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.lineInfo || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Kapanış Arıza Bilgisi</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.closureFaultInfo} onChangeText={t => setEditForm({ ...editForm, closureFaultInfo: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.closureFaultInfo || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Çözüm</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.solution} onChangeText={t => setEditForm({ ...editForm, solution: t })} multiline className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'} h-20`} textAlignVertical="top" />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.solution || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">Çalışan Personel</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.workingPersonnel} onChangeText={t => setEditForm({ ...editForm, workingPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.workingPersonnel || '-'}</Text>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text className="font-bold text-gray-500 text-xs">TCDD Personeli</Text>
-                                    {isEditing ? (
-                                        <TextInput value={editForm.tcddPersonnel} onChangeText={t => setEditForm({ ...editForm, tcddPersonnel: t })} className={`p-2 rounded border ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} />
-                                    ) : (
-                                        <Text className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedFault.tcddPersonnel || '-'}</Text>
-                                    )}
-                                </View>
-
-                                {/* Image Management in Edit Mode */}
-                                {isEditing && (
-                                    <View>
-                                        <Text className="font-bold text-gray-500 text-xs mb-2">Mevcut Fotoğraflar</Text>
-                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                                            {editForm.images && editForm.images.map((img: any, index: number) => (
-                                                <View key={index} className="relative">
-                                                    <Image source={{ uri: img.url }} className="w-20 h-20 rounded-lg bg-gray-200" />
-                                                    <TouchableOpacity onPress={() => handleDeleteImage(img.id)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
-                                                        <Text className="text-white font-bold">X</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            ))}
-                                            {(!editForm.images || editForm.images.length === 0) && (
-                                                <Text className={`${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>Fotoğraf yok</Text>
-                                            )}
-                                        </ScrollView>
-
-                                        <Text className="font-bold text-gray-500 text-xs mb-2">Yeni Fotoğraf Ekle</Text>
-                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-2">
-                                            {editForm.newImages && editForm.newImages.map((uri: string, index: number) => (
-                                                <View key={index} className="relative">
-                                                    <Image source={{ uri }} className="w-20 h-20 rounded-lg bg-gray-200" />
-                                                    <TouchableOpacity onPress={() => removeNewImage(index)} className="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 items-center justify-center">
-                                                        <Text className="text-white font-bold">X</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            ))}
-                                            <TouchableOpacity onPress={pickNewImage} className={`w-20 h-20 rounded-lg items-center justify-center border-2 border-dashed ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
-                                                <Text className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>+</Text>
-                                            </TouchableOpacity>
-                                        </ScrollView>
-                                    </View>
+                                {isEditing ? (
+                                    <TextInput value={editForm.faultDate} onChangeText={t => setEditForm({ ...editForm, faultDate: t })} style={{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16 }} />
+                                ) : (
+                                    <Text style={{ fontSize: 18, fontWeight: '600', color: isDark ? '#F1F5F9' : '#1E293B' }}>{selectedFault.faultDate || '-'}</Text>
                                 )}
-
-                                {!isEditing && selectedFault.images && selectedFault.images.length > 0 && (
-                                    <View>
-                                        <Text className="font-bold text-gray-500 text-xs mb-2">Fotoğraflar</Text>
-                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                                            {selectedFault.images.map((img: any, index: number) => (
-                                                <Image
-                                                    key={index}
-                                                    source={{ uri: img.url }}
-                                                    className="w-40 h-40 rounded-lg bg-gray-200"
-                                                    resizeMode="cover"
-                                                />
-                                            ))}
-                                        </ScrollView>
-                                    </View>
+                            </View>
+                            <View style={{
+                                flex: 1,
+                                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                                borderRadius: 16,
+                                padding: 16,
+                                shadowColor: isDark ? '#000' : '#64748B',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 8,
+                                elevation: 3,
+                            }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                    <Clock size={16} color={isDark ? '#22D3EE' : '#3B82F6'} />
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Arıza Saati</Text>
+                                </View>
+                                {isEditing ? (
+                                    <TextInput value={editForm.faultTime} onChangeText={t => setEditForm({ ...editForm, faultTime: t })} style={{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16 }} />
+                                ) : (
+                                    <Text style={{ fontSize: 18, fontWeight: '600', color: isDark ? '#F1F5F9' : '#1E293B' }}>{selectedFault.faultTime || '-'}</Text>
                                 )}
                             </View>
                         </View>
 
-                        {canEdit && (
-                            <View className="mb-8">
+                        {/* Detail Info Cards */}
+                        <View style={{
+                            backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                            borderRadius: 20,
+                            marginBottom: 16,
+                            padding: 20,
+                            shadowColor: isDark ? '#000' : '#64748B',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: isDark ? 0.3 : 0.1,
+                            shadowRadius: 12,
+                            elevation: 5,
+                        }}>
+                            {/* Bildiren Kişi */}
+                            <View style={{ marginBottom: 20 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 14 }}>👤</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Bildiren Kişi</Text>
+                                </View>
                                 {isEditing ? (
-                                    <View className="flex-row gap-2">
-                                        <TouchableOpacity onPress={handleUpdate} className="flex-1 bg-green-600 p-3 rounded items-center"><Text className="text-white font-bold">Değişiklikleri Kaydet</Text></TouchableOpacity>
-                                        <TouchableOpacity onPress={() => setIsEditing(false)} className="flex-1 bg-gray-200 p-3 rounded items-center"><Text className="text-gray-600 font-bold">İptal</Text></TouchableOpacity>
-                                    </View>
+                                    <TextInput value={editForm.reporterName} onChangeText={t => setEditForm({ ...editForm, reporterName: t })} style={{ padding: 12, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16 }} />
                                 ) : (
-                                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                                        <TouchableOpacity onPress={() => setIsEditing(true)} style={{ flex: 1, backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', padding: 12, borderRadius: 10, alignItems: 'center' }}>
-                                            <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold' }}>Düzenle</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} style={{ flex: 1, backgroundColor: isDark ? '#475569' : '#64748B', padding: 12, borderRadius: 10, alignItems: 'center' }}>
-                                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Sil</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    <Text style={{ fontSize: 16, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B', marginLeft: 36 }}>{selectedFault.reporterName || '-'}</Text>
                                 )}
+                            </View>
+
+                            {/* Hat Bilgisi */}
+                            <View style={{ marginBottom: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 14 }}>🛤️</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Hat Bilgisi</Text>
+                                </View>
+                                {isEditing ? (
+                                    <TextInput value={editForm.lineInfo} onChangeText={t => setEditForm({ ...editForm, lineInfo: t })} style={{ padding: 12, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16 }} />
+                                ) : (
+                                    <Text style={{ fontSize: 16, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B', marginLeft: 36 }}>{selectedFault.lineInfo || '-'}</Text>
+                                )}
+                            </View>
+
+                            {/* Kapanış Arıza Bilgisi */}
+                            <View style={{ marginBottom: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 14 }}>⚠️</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Kapanış Arıza Bilgisi</Text>
+                                </View>
+                                {isEditing ? (
+                                    <TextInput value={editForm.closureFaultInfo} onChangeText={t => setEditForm({ ...editForm, closureFaultInfo: t })} style={{ padding: 12, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16 }} />
+                                ) : (
+                                    <Text style={{ fontSize: 16, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B', marginLeft: 36 }}>{selectedFault.closureFaultInfo || '-'}</Text>
+                                )}
+                            </View>
+
+                            {/* Çözüm */}
+                            <View style={{ marginBottom: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 14 }}>✅</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Çözüm</Text>
+                                </View>
+                                {isEditing ? (
+                                    <TextInput value={editForm.solution} onChangeText={t => setEditForm({ ...editForm, solution: t })} multiline style={{ padding: 12, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 16, minHeight: 80, textAlignVertical: 'top' }} />
+                                ) : (
+                                    <Text style={{ fontSize: 16, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B', marginLeft: 36, lineHeight: 24 }}>{selectedFault.solution || '-'}</Text>
+                                )}
+                            </View>
+
+                            {/* Personnel Row - 2 Column */}
+                            <View style={{ flexDirection: 'row', gap: 12, paddingTop: 16, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)' }}>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                                        <Text style={{ fontSize: 14 }}>👷</Text>
+                                        <Text style={{ fontSize: 11, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>Çalışan Personel</Text>
+                                    </View>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.workingPersonnel} onChangeText={t => setEditForm({ ...editForm, workingPersonnel: t })} style={{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 14 }} />
+                                    ) : (
+                                        <Text style={{ fontSize: 15, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B' }}>{selectedFault.workingPersonnel || '-'}</Text>
+                                    )}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                                        <Text style={{ fontSize: 14 }}>🏢</Text>
+                                        <Text style={{ fontSize: 11, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8' }}>TCDD Personeli</Text>
+                                    </View>
+                                    {isEditing ? (
+                                        <TextInput value={editForm.tcddPersonnel} onChangeText={t => setEditForm({ ...editForm, tcddPersonnel: t })} style={{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 14 }} />
+                                    ) : (
+                                        <Text style={{ fontSize: 15, fontWeight: '500', color: isDark ? '#F1F5F9' : '#1E293B' }}>{selectedFault.tcddPersonnel || '-'}</Text>
+                                    )}
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Image Management in Edit Mode */}
+                        {isEditing && (
+                            <View style={{
+                                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                                borderRadius: 20,
+                                marginBottom: 16,
+                                padding: 20,
+                                shadowColor: isDark ? '#000' : '#64748B',
+                                shadowOffset: { width: 0, height: 4 },
+                                shadowOpacity: isDark ? 0.3 : 0.1,
+                                shadowRadius: 12,
+                                elevation: 5,
+                            }}>
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8', marginBottom: 12 }}>📷 Mevcut Fotoğraflar</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+                                    {editForm.images && editForm.images.map((img: any, index: number) => (
+                                        <View key={index} style={{ marginRight: 12, position: 'relative' }}>
+                                            <Image source={{ uri: img.url }} style={{ width: 100, height: 100, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#E2E8F0' }} />
+                                            <TouchableOpacity onPress={() => handleDeleteImage(img.id)} style={{ position: 'absolute', top: -8, right: -8, backgroundColor: '#EF4444', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                                                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>✕</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                    {(!editForm.images || editForm.images.length === 0) && (
+                                        <Text style={{ color: isDark ? '#64748B' : '#94A3B8', fontStyle: 'italic' }}>Fotoğraf yok</Text>
+                                    )}
+                                </ScrollView>
+
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: isDark ? '#64748B' : '#94A3B8', marginBottom: 12 }}>➕ Yeni Fotoğraf Ekle</Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    {editForm.newImages && editForm.newImages.map((uri: string, index: number) => (
+                                        <View key={index} style={{ marginRight: 12, position: 'relative' }}>
+                                            <Image source={{ uri }} style={{ width: 100, height: 100, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#E2E8F0' }} />
+                                            <TouchableOpacity onPress={() => removeNewImage(index)} style={{ position: 'absolute', top: -8, right: -8, backgroundColor: '#EF4444', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                                                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>✕</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                    <TouchableOpacity onPress={pickNewImage} style={{ width: 100, height: 100, borderRadius: 12, borderWidth: 2, borderStyle: 'dashed', borderColor: isDark ? '#475569' : '#CBD5E1', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 32, color: isDark ? '#64748B' : '#94A3B8' }}>+</Text>
+                                    </TouchableOpacity>
+                                </ScrollView>
+                            </View>
+                        )}
+
+                        {/* Photo Gallery - View Mode */}
+                        {!isEditing && selectedFault.images && selectedFault.images.length > 0 && (
+                            <View style={{
+                                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                                borderRadius: 20,
+                                marginBottom: 16,
+                                padding: 20,
+                                shadowColor: isDark ? '#000' : '#64748B',
+                                shadowOffset: { width: 0, height: 4 },
+                                shadowOpacity: isDark ? 0.3 : 0.1,
+                                shadowRadius: 12,
+                                elevation: 5,
+                            }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Text style={{ fontSize: 18 }}>📷</Text>
+                                        <Text style={{ fontSize: 16, fontWeight: '600', color: isDark ? '#F1F5F9' : '#1E293B' }}>Fotoğraflar</Text>
+                                    </View>
+                                    <View style={{ backgroundColor: isDark ? 'rgba(34, 211, 238, 0.15)' : 'rgba(59, 130, 246, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#22D3EE' : '#3B82F6' }}>{selectedFault.images.length} Fotoğraf</Text>
+                                    </View>
+                                </View>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ marginHorizontal: -4 }}>
+                                    {selectedFault.images.map((img: any, index: number) => (
+                                        <TouchableOpacity key={index} onPress={() => setFullScreenImage(img.url)} activeOpacity={0.8} style={{ marginHorizontal: 4 }}>
+                                            <Image
+                                                source={{ uri: img.url }}
+                                                style={{ width: 160, height: 160, borderRadius: 16, backgroundColor: isDark ? '#334155' : '#E2E8F0' }}
+                                                resizeMode="cover"
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                                <Text style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: isDark ? '#64748B' : '#94A3B8' }}>👆 Büyütmek için fotoğrafa dokun</Text>
+                            </View>
+                        )}
+
+                        {/* Full-screen Image Modal */}
+                        <Modal visible={!!fullScreenImage} transparent animationType="fade" onRequestClose={() => setFullScreenImage(null)}>
+                            <TouchableOpacity
+                                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}
+                                activeOpacity={1}
+                                onPress={() => setFullScreenImage(null)}
+                            >
+                                <TouchableOpacity activeOpacity={1} style={{ position: 'absolute', top: 50, right: 20, zIndex: 10 }} onPress={() => setFullScreenImage(null)}>
+                                    <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>×</Text>
+                                </TouchableOpacity>
+                                {fullScreenImage && (
+                                    <Image
+                                        source={{ uri: fullScreenImage }}
+                                        style={{ width: '95%', height: '80%' }}
+                                        resizeMode="contain"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        </Modal>
+
+                        {/* Spacer for buttons */}
+                        <View style={{ height: 20 }} />
+
+                        {/* Copy Button - Available to all users */}
+                        {!isEditing && (
+                            <TouchableOpacity
+                                onPress={async () => {
+                                    const text = `Arıza Tarihi: ${selectedFault.faultDate || '-'}
+Arıza Saati: ${selectedFault.faultTime || '-'}
+Arızayı Bildiren: ${selectedFault.reporterName || '-'}
+Hat Bilgisi: ${selectedFault.lineInfo || '-'}
+Arıza Bilgisi: ${selectedFault.closureFaultInfo || '-'}
+Arıza Çözümü: ${selectedFault.solution || '-'}
+Çalışan Personel: ${selectedFault.workingPersonnel || '-'}
+Katılan TCDD Personeli: ${selectedFault.tcddPersonnel || '-'}`;
+                                    await Clipboard.setStringAsync(text);
+                                    showAlert('Kopyalandı', 'Arıza bilgileri panoya kopyalandı', 'success');
+                                }}
+                                style={{
+                                    backgroundColor: isDark ? '#059669' : '#10B981',
+                                    padding: 14,
+                                    borderRadius: 12,
+                                    alignItems: 'center',
+                                    marginBottom: 12,
+                                }}
+                            >
+                                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Kopyala</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Edit & Delete Buttons - Only for canEdit users */}
+                        {canEdit && !isEditing && (
+                            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                                <TouchableOpacity onPress={() => setIsEditing(true)} style={{ flex: 1, backgroundColor: isDark ? '#22D3EE' : '#3B82F6', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                                    <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Düzenle</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} style={{ flex: 1, backgroundColor: '#EF4444', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Sil</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Edit Mode Buttons */}
+                        {canEdit && isEditing && (
+                            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                                <TouchableOpacity onPress={handleUpdate} style={{ flex: 1, backgroundColor: '#22C55E', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Kaydet</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setIsEditing(false)} style={{ flex: 1, backgroundColor: isDark ? '#475569' : '#E2E8F0', padding: 14, borderRadius: 12, alignItems: 'center' }}>
+                                    <Text style={{ color: isDark ? '#F1F5F9' : '#64748B', fontWeight: 'bold', fontSize: 16 }}>İptal</Text>
+                                </TouchableOpacity>
                             </View>
                         )}
                     </ScrollView>
@@ -576,7 +770,7 @@ export default function HistoryScreen() {
                     />
                     <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
                 </KeyboardAvoidingView >
-            </View>
+            </View >
         );
     }
 
@@ -721,28 +915,122 @@ export default function HistoryScreen() {
                         <Text className="text-gray-500">Geçmiş yükleniyor...</Text>
                     ) : (
                         <>
-                            {filteredHistory.map((fault) => (
-                                <TouchableOpacity key={fault.id} onPress={() => openDetails(fault)}>
-                                    <View className={`${isDark ? 'bg-dark-card border-dark-card' : 'bg-light-card border-gray-200'} p-4 rounded-lg shadow-sm border mb-3`}>
-                                        <View className="flex-row justify-between items-start">
-                                            <Text className={`font-bold text-lg flex-1 mr-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>{fault.title}</Text>
-                                            <View className={`px-2 py-1 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                                <Text className={`text-xs font-bold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>KAPALI</Text>
+                            {filteredHistory.map((fault, index) => (
+                                <TouchableOpacity
+                                    key={fault.id}
+                                    onPress={() => openDetails(fault)}
+                                    activeOpacity={0.7}
+                                    style={{ transform: [{ scale: 1 }] }}
+                                >
+                                    <View style={{
+                                        backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                                        borderRadius: 16,
+                                        marginBottom: 14,
+                                        shadowColor: isDark ? '#000' : '#64748B',
+                                        shadowOffset: { width: 0, height: 4 },
+                                        shadowOpacity: isDark ? 0.3 : 0.1,
+                                        shadowRadius: 12,
+                                        elevation: 5,
+                                        overflow: 'hidden',
+                                    }}>
+                                        {/* Left Accent Bar */}
+                                        <View style={{
+                                            position: 'absolute',
+                                            left: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            width: 4,
+                                            backgroundColor: isDark ? '#22D3EE' : '#3B82F6',
+                                            borderTopLeftRadius: 16,
+                                            borderBottomLeftRadius: 16,
+                                        }} />
+
+                                        <View style={{ padding: 16, paddingLeft: 20 }}>
+                                            {/* Row 1: Chiefdom + Status Badge */}
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                                    <Building2 size={14} color={isDark ? '#22D3EE' : '#3B82F6'} />
+                                                    <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#22D3EE' : '#3B82F6' }}>
+                                                        {fault.chiefdom?.name || 'Şeflik Belirtilmemiş'}
+                                                    </Text>
+                                                </View>
+                                                <View style={{
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    gap: 4,
+                                                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.1)',
+                                                    paddingHorizontal: 10,
+                                                    paddingVertical: 4,
+                                                    borderRadius: 20,
+                                                    borderWidth: 1,
+                                                    borderColor: isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.2)',
+                                                }}>
+                                                    <CheckCircle2 size={12} color="#22C55E" />
+                                                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#22C55E' }}>KAPALI</Text>
+                                                </View>
                                             </View>
-                                        </View>
 
-                                        <Text className="text-gray-600 mt-1 mb-2" numberOfLines={2}>{fault.description}</Text>
+                                            {/* Row 2: Fault Title */}
+                                            <Text style={{
+                                                fontSize: 17,
+                                                fontWeight: '700',
+                                                color: isDark ? '#F1F5F9' : '#1E293B',
+                                                marginBottom: 12,
+                                                lineHeight: 24,
+                                            }}>
+                                                {fault.title}
+                                            </Text>
 
-                                        <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-100">
-                                            <Text className="text-gray-400 text-xs">Tarih: {fault.faultDate || '-'}</Text>
-                                            <Text className={`${isDark ? 'text-dark-primary' : 'text-light-primary'} text-xs font-bold`}>Detayları Gör →</Text>
+                                            {/* Row 3: Date + Time */}
+                                            <View style={{
+                                                flexDirection: 'row',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                paddingTop: 12,
+                                                borderTopWidth: 1,
+                                                borderTopColor: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.2)'
+                                            }}>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                        <Calendar size={13} color={isDark ? '#64748B' : '#94A3B8'} />
+                                                        <Text style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>
+                                                            {fault.faultDate || '-'}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                        <Clock size={13} color={isDark ? '#64748B' : '#94A3B8'} />
+                                                        <Text style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>
+                                                            {fault.faultTime || '-'}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#22D3EE' : '#3B82F6' }}>
+                                                    Detaylar →
+                                                </Text>
+                                            </View>
                                         </View>
                                     </View>
                                 </TouchableOpacity>
                             ))}
                             {filteredHistory.length === 0 && (
-                                <View className="items-center justify-center py-10">
-                                    <Text className="text-gray-400 text-lg">Kapatılmış arıza bulunamadı.</Text>
+                                <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
+                                    <View style={{
+                                        width: 80,
+                                        height: 80,
+                                        borderRadius: 40,
+                                        backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(148, 163, 184, 0.15)',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginBottom: 16,
+                                    }}>
+                                        <FileX2 size={36} color={isDark ? '#64748B' : '#94A3B8'} />
+                                    </View>
+                                    <Text style={{ fontSize: 18, fontWeight: '600', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 6 }}>
+                                        Arıza Bulunamadı
+                                    </Text>
+                                    <Text style={{ fontSize: 14, color: isDark ? '#64748B' : '#94A3B8', textAlign: 'center' }}>
+                                        {searchQuery ? 'Arama kriterlerine uygun arıza yok' : 'Henüz kapatılmış arıza kaydı yok'}
+                                    </Text>
                                 </View>
                             )}
                         </>
