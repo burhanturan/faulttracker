@@ -1,6 +1,7 @@
 import { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 interface StatCardProps {
     title: string;
@@ -13,8 +14,18 @@ interface StatCardProps {
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, onPress, subtitle, fullWidth }) => {
+    const { actualTheme } = useTheme();
+    const isDark = actualTheme === 'dark';
+
     // Icon background: light version of the color (15% opacity)
     const iconBgColor = color + '26';
+
+    // Dark mode colors
+    const cardBg = isDark ? '#1E293B' : '#EFF3F8';
+    const borderColor = isDark ? '#334155' : '#E5E7EB';
+    const valueColor = isDark ? '#FFFFFF' : '#1F2937';
+    const titleColor = isDark ? '#94A3B8' : '#374151';
+    const subtitleColor = isDark ? '#94A3B8' : '#6B7280';
 
     return (
         <TouchableOpacity
@@ -22,7 +33,11 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, co
             style={[styles.cardContainer, fullWidth && styles.fullWidth]}
             disabled={!onPress}
         >
-            <View style={[styles.card, fullWidth && styles.cardFullWidth]}>
+            <View style={[
+                styles.card,
+                fullWidth && styles.cardFullWidth,
+                { backgroundColor: cardBg, borderColor: borderColor }
+            ]}>
                 {/* Subtle accent glow */}
                 <View style={[styles.accentGlow, { backgroundColor: color }]} />
 
@@ -33,10 +48,10 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, co
 
                 {/* Text Content */}
                 <View style={styles.textContainer}>
-                    <Text style={[styles.value, fullWidth && styles.valueLarge]}>{value}</Text>
-                    <Text style={styles.title} numberOfLines={1}>{title}</Text>
+                    <Text style={[styles.value, fullWidth && styles.valueLarge, { color: valueColor }]}>{value}</Text>
+                    <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>{title}</Text>
                     {subtitle && (
-                        <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+                        <Text style={[styles.subtitle, { color: subtitleColor }]} numberOfLines={1}>{subtitle}</Text>
                     )}
                 </View>
             </View>
@@ -53,11 +68,9 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     card: {
-        backgroundColor: '#EFF3F8',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
         height: 100,
         justifyContent: 'center',
         alignItems: 'center',
@@ -96,7 +109,6 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#1F2937',
         letterSpacing: -0.5,
     },
     valueLarge: {
@@ -105,14 +117,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#374151',
         marginTop: 2,
     },
     subtitle: {
         fontSize: 12,
         fontWeight: '500',
-        color: '#6B7280',
     },
 });
-
-

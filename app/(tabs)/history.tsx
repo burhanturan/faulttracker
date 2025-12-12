@@ -19,22 +19,15 @@ export default function HistoryScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filteredHistory, setFilteredHistory] = useState<any[]>([]);
 
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setFilteredHistory(history);
-            return;
-        }
+    const filteredHistory = history.filter(fault => {
         const query = searchQuery.toLowerCase();
-        const results = history.filter(f =>
-            f.title?.toLowerCase().includes(query) ||
-            f.description?.toLowerCase().includes(query) ||
-            f.id.toString().includes(query) ||
-            f.status?.toLowerCase().includes(query)
+        return (
+            fault.title?.toLowerCase().includes(query) ||
+            fault.description?.toLowerCase().includes(query) ||
+            fault.id?.toString().includes(query)
         );
-        setFilteredHistory(results);
-    }, [searchQuery, history]);
+    });
 
     useFocusEffect(
         useCallback(() => {
@@ -93,7 +86,7 @@ export default function HistoryScreen() {
         visible: boolean;
         title: string;
         message: string;
-        type: 'success' | 'error' | 'info' | 'confirm';
+        type: 'success' | 'error' | 'info' | 'confirm' | 'loading';
         onConfirm?: () => void;
     }>({
         visible: false,
@@ -102,7 +95,7 @@ export default function HistoryScreen() {
         type: 'info'
     });
 
-    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'confirm' | 'loading' = 'info', onConfirm?: () => void) => {
         setAlertConfig({ visible: true, title, message, type, onConfirm });
     };
 
@@ -231,6 +224,8 @@ export default function HistoryScreen() {
     const handleUpdate = async () => {
         if (!selectedFault) return;
 
+        showAlert('Arıza Güncelleniyor', 'Lütfen bekleyiniz...', 'loading');
+        const startTime = Date.now();
         try {
             const formData = new FormData();
             // Add all text fields
@@ -257,13 +252,20 @@ export default function HistoryScreen() {
             }
 
             await api.put(`/faults/${selectedFault.id}`, formData, true);
-            showAlert('Başarılı', 'Arıza başarıyla güncellendi', 'success');
-            setIsEditing(false);
-            setSelectedFault(null);
-            fetchHistory();
+            const elapsed = Date.now() - startTime;
+            const waitTime = Math.max(500 - elapsed, 0);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            closeAlert();
+            setTimeout(() => {
+                showAlert('Başarılı', 'Arıza başarıyla güncellendi', 'success');
+                setIsEditing(false);
+                setSelectedFault(null);
+                fetchHistory();
+            }, 100);
         } catch (error) {
             console.error(error);
-            showAlert('Hata', 'Arıza güncellenemedi', 'error');
+            closeAlert();
+            setTimeout(() => showAlert('Hata', 'Arıza güncellenemedi', 'error'), 100);
         }
     };
 
@@ -410,13 +412,13 @@ export default function HistoryScreen() {
 
     if (selectedFault) {
         return (
-            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
-                <RailGuardHeader user={user} title="Arıza Detayı" showSearch={false} showGreeting={false} />
+            <View className="flex-1" style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+                <RailGuardHeader user={user} title="Arıza Detayları" showSearch={false} showGreeting={false} />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 16 }}>
-                            <TouchableOpacity onPress={() => setSelectedFault(null)} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>← Geri</Text>
+                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <TouchableOpacity onPress={() => setSelectedFault(null)} style={{ backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }}>
+                                <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -552,10 +554,10 @@ export default function HistoryScreen() {
                                     </View>
                                 ) : (
                                     <View style={{ flexDirection: 'row', gap: 8 }}>
-                                        <TouchableOpacity onPress={() => setIsEditing(true)} style={{ flex: 1, backgroundColor: '#1c4ed8', padding: 12, borderRadius: 8, alignItems: 'center' }}>
-                                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Düzenle</Text>
+                                        <TouchableOpacity onPress={() => setIsEditing(true)} style={{ flex: 1, backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', padding: 12, borderRadius: 10, alignItems: 'center' }}>
+                                            <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold' }}>Düzenle</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} style={{ flex: 1, backgroundColor: '#EF4444', padding: 12, borderRadius: 8, alignItems: 'center' }}>
+                                        <TouchableOpacity onPress={() => handleDeleteFault(selectedFault.id)} style={{ flex: 1, backgroundColor: isDark ? '#475569' : '#64748B', padding: 12, borderRadius: 10, alignItems: 'center' }}>
                                             <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Sil</Text>
                                         </TouchableOpacity>
                                     </View>
@@ -580,13 +582,13 @@ export default function HistoryScreen() {
 
     if (showCreateModal) {
         return (
-            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
-                <RailGuardHeader user={user} title="Yeni Arıza" showSearch={false} showGreeting={false} />
+            <View className="flex-1" style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+                <RailGuardHeader user={user} title="Yeni Arıza Girişi" showSearch={false} showGreeting={false} />
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%', paddingTop: 20 }}>
-                        <View className="flex-row justify-end mb-4">
-                            <TouchableOpacity onPress={() => setShowCreateModal(false)} style={{ backgroundColor: '#EF4444', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
-                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>İptal Et</Text>
+                    <ScrollView className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`} showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: '100%' }}>
+                        <View className="flex-row justify-between items-center mb-4">
+                            <TouchableOpacity onPress={() => setShowCreateModal(false)} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} px-4 py-2 rounded-lg shadow-sm mb-4`}>
+                                <Text className="text-black font-bold">İptal</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -674,8 +676,8 @@ export default function HistoryScreen() {
                                 <TextInput value={createForm.tcddPersonnel} onChangeText={t => setCreateForm({ ...createForm, tcddPersonnel: t })} className={`p-3 rounded border ${isDark ? 'bg-dark-card border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`} placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'} />
                             </View>
 
-                            <TouchableOpacity onPress={handleCreateClosedFault} style={{ backgroundColor: '#1c4ed8', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 16 }}>
-                                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Oluştur</Text>
+                            <TouchableOpacity onPress={handleCreateClosedFault} className={`${isDark ? 'bg-dark-primary' : 'bg-light-primary'} p-4 rounded-lg items-center mt-4`}>
+                                <Text className={`${isDark ? 'text-black' : 'text-white'} font-bold text-lg`}>Oluştur</Text>
                             </TouchableOpacity>
                         </View>
                     </ScrollView>
@@ -695,25 +697,23 @@ export default function HistoryScreen() {
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#F9FAFB' }}>
-            <RailGuardHeader
-                user={user}
-                title="Geçmiş"
-                showSearch={true}
-                showGreeting={true}
-                onSearch={setSearchQuery}
-            />
+        <View className="flex-1" style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+            <RailGuardHeader user={user} title="Geçmiş Arızalar" showSearch={true} showGreeting={true} onSearch={setSearchQuery} />
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
                 <ScrollView
                     ref={ref}
                     className={`flex-1 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'} p-4`}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ width: '100%', paddingBottom: 100, paddingTop: 20 }}
+                    contentContainerStyle={{ width: '100%' }}
                 >
-                    <View className="mb-4 items-center">
-                        <TouchableOpacity onPress={openCreateModal} style={{ backgroundColor: '#1c4ed8', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, width: '100%', alignItems: 'center', marginBottom: 16 }}>
-                            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>+ Yeni Arıza Bildir</Text>
+                    {/* Header Actions */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>← Geri</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={openCreateModal} style={{ backgroundColor: isDark ? '#22D3EE' : '#1c4ed8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ color: isDark ? '#0F172A' : '#FFFFFF', fontWeight: 'bold', fontSize: 15 }}>+ Yeni Arıza</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -742,9 +742,7 @@ export default function HistoryScreen() {
                             ))}
                             {filteredHistory.length === 0 && (
                                 <View className="items-center justify-center py-10">
-                                    <Text className="text-gray-400 text-lg">
-                                        {searchQuery ? 'Arama sonucu bulunamadı.' : 'Kapatılmış arıza bulunamadı.'}
-                                    </Text>
+                                    <Text className="text-gray-400 text-lg">Kapatılmış arıza bulunamadı.</Text>
                                 </View>
                             )}
                         </>
@@ -760,6 +758,6 @@ export default function HistoryScreen() {
                 />
                 <LoadingOverlay visible={loading && !refreshing} message="İşlem yapılıyor..." />
             </KeyboardAvoidingView>
-        </View>
+        </View >
     );
 }

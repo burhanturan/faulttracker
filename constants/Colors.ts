@@ -14,12 +14,12 @@ export default {
   },
   dark: {
     text: '#FFFFFF',
-    background: '#121212', // dark-bg
-    tint: '#FFD700', // dark-primary (Gold)
-    tabIconDefault: '#A1A1AA',
-    tabIconSelected: '#FFD700',
-    headerBackground: '#1F2228', // Dark Gray/Blue
-    tabBarBackground: '#1F2228', // Dark Gray/Blue
-    headerText: '#FFFFFF', // White (for visibility on dark)
+    background: '#0F172A', // Navy dark-bg
+    tint: '#22D3EE', // Cyan accent
+    tabIconDefault: '#64748B', // Slate 500
+    tabIconSelected: '#22D3EE', // Cyan accent
+    headerBackground: '#0F172A', // Navy
+    tabBarBackground: '#0F172A', // Navy
+    headerText: '#FFFFFF', // White
   },
 };

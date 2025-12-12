@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../lib/api';
+import CustomAlert from './CustomAlert';
 
 type Props = {
     visible: boolean;
@@ -15,7 +16,9 @@ export default function EditRegionModal({ visible, onClose, region, onUpdate }: 
     const isDark = actualTheme === 'dark';
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ visible: boolean, title: string, message: string, type: 'success' | 'error' | 'info' | 'loading' }>({
+        visible: false, title: '', message: '', type: 'info'
+    });
 
     useEffect(() => {
         if (region) {
@@ -24,18 +27,36 @@ export default function EditRegionModal({ visible, onClose, region, onUpdate }: 
         }
     }, [region]);
 
+    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' | 'loading') => {
+        setAlertConfig({ visible: true, title, message, type });
+    };
+
+    const closeAlert = () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    };
+
     const handleSave = async () => {
         if (!name) return;
-        setLoading(true);
+        showAlert('Bölge Güncelleniyor', 'Lütfen bekleyiniz...', 'loading');
+        const startTime = Date.now();
         try {
             await api.put(`/regions/${region.id}`, { name, description });
-            Alert.alert('Başarılı', 'Bölge güncellendi');
-            onUpdate();
+            const elapsed = Date.now() - startTime;
+            const waitTime = Math.max(500 - elapsed, 0);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            closeAlert();
+            setTimeout(() => {
+                showAlert('Başarılı', 'Bölge güncellendi', 'success');
+            }, 100);
         } catch (e) {
-            Alert.alert('Hata', 'Güncelleme başarısız');
-        } finally {
-            setLoading(false);
+            closeAlert();
+            setTimeout(() => showAlert('Hata', 'Güncelleme başarısız', 'error'), 100);
         }
+    };
+
+    const handleSuccessClose = () => {
+        closeAlert();
+        onUpdate();
     };
 
     return (
@@ -63,11 +84,18 @@ export default function EditRegionModal({ visible, onClose, region, onUpdate }: 
                             <Text className="text-white font-bold">İptal</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleSave} className="flex-1 bg-green-600 p-3 rounded items-center">
-                            <Text className="text-white font-bold">{loading ? '...' : 'Kaydet'}</Text>
+                            <Text className="text-white font-bold">Kaydet</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </View>
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={alertConfig.type === 'success' ? handleSuccessClose : closeAlert}
+            />
         </Modal>
     );
 }
